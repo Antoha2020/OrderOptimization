@@ -40,26 +40,6 @@ namespace GmapTest
             return null;
         }
 
-        public static List<Route> GetListRoutes()
-        {
-            List<Route> listRoutes = new List<Route>();
-            DBConnection();
-            conn.Open();
-            MySqlCommand cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT * FROM routes";
-            MySqlDataReader reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                listRoutes.Add(new Route(reader["codeGPS"].ToString(), reader["name"].ToString(), reader["latBeg"].ToString(),
-                    reader["lonBeg"].ToString(), reader["team"].ToString(), reader["branch"].ToString()));                
-            }
-
-            reader.Close();
-            conn.Close();
-            return listRoutes;
-        }
-
-
         public static List<string> getPoints(string Code)
         {
             bool enter = false;

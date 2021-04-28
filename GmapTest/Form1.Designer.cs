@@ -174,14 +174,12 @@
             this.справкаToolStripMenuItem.Name = "справкаToolStripMenuItem";
             this.справкаToolStripMenuItem.Size = new System.Drawing.Size(65, 20);
             this.справкаToolStripMenuItem.Text = "Справка";
-            this.справкаToolStripMenuItem.Click += new System.EventHandler(this.справкаToolStripMenuItem_Click);
             // 
             // оПрограммеToolStripMenuItem
             // 
             this.оПрограммеToolStripMenuItem.Name = "оПрограммеToolStripMenuItem";
             this.оПрограммеToolStripMenuItem.Size = new System.Drawing.Size(94, 20);
             this.оПрограммеToolStripMenuItem.Text = "О программе";
-            this.оПрограммеToolStripMenuItem.Click += new System.EventHandler(this.оПрограммеToolStripMenuItem_Click);
             // 
             // trackBar1
             // 
@@ -212,7 +210,6 @@
             this.toolStrip1.Size = new System.Drawing.Size(37, 604);
             this.toolStrip1.TabIndex = 4;
             this.toolStrip1.Text = "toolStrip1";
-            this.toolStrip1.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.toolStrip1_ItemClicked);
             // 
             // toolStripButton1
             // 
@@ -258,7 +255,6 @@
             this.toolStripButton5.Size = new System.Drawing.Size(34, 36);
             this.toolStripButton5.Text = "toolStripButton5";
             this.toolStripButton5.ToolTipText = "Очистить карту";
-            this.toolStripButton5.Click += new System.EventHandler(this.toolStripButton5_Click_1);
             // 
             // panel1
             // 
@@ -294,12 +290,14 @@
             // 
             // button6
             // 
+            this.button6.Enabled = false;
             this.button6.Location = new System.Drawing.Point(6, 58);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(182, 23);
             this.button6.TabIndex = 12;
             this.button6.Text = "Рассчитать";
             this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
             // groupBox1
             // 
@@ -321,7 +319,6 @@
             this.groupBox1.TabIndex = 81;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Назначить/Показать маршрут";
-            this.groupBox1.Enter += new System.EventHandler(this.groupBox1_Enter);
             // 
             // checkBox4
             // 
@@ -349,7 +346,6 @@
             this.checkBox6.Size = new System.Drawing.Size(15, 14);
             this.checkBox6.TabIndex = 87;
             this.checkBox6.UseVisualStyleBackColor = true;
-            this.checkBox6.CheckedChanged += new System.EventHandler(this.checkBox6_CheckedChanged);
             // 
             // button10
             // 
@@ -368,7 +364,6 @@
             this.button11.TabIndex = 86;
             this.button11.Text = "Мастер 6";
             this.button11.UseVisualStyleBackColor = true;
-            this.button11.Click += new System.EventHandler(this.button11_Click);
             // 
             // button12
             // 
@@ -405,6 +400,7 @@
             this.checkBox1.Size = new System.Drawing.Size(15, 14);
             this.checkBox1.TabIndex = 81;
             this.checkBox1.UseVisualStyleBackColor = true;
+            this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
             // button7
             // 
@@ -441,6 +437,7 @@
             this.button1.TabIndex = 1;
             this.button1.Text = "Загрузка картографии";
             this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // panel2
             // 
@@ -481,7 +478,6 @@
             this.button5.TabIndex = 78;
             this.button5.Text = "Показать маршрут";
             this.button5.UseVisualStyleBackColor = true;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
             // comboBox4
             // 
@@ -499,7 +495,6 @@
             this.button4.TabIndex = 76;
             this.button4.Text = "Построить все маршруты";
             this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
             // textBox11
             // 
@@ -540,7 +535,6 @@
             this.radioButton2.TabIndex = 1;
             this.radioButton2.Text = "Расчет маршрута";
             this.radioButton2.UseVisualStyleBackColor = true;
-            this.radioButton2.CheckedChanged += new System.EventHandler(this.radioButton2_CheckedChanged);
             // 
             // radioButton1
             // 
@@ -553,7 +547,6 @@
             this.radioButton1.TabStop = true;
             this.radioButton1.Text = "Просмотр ТТ";
             this.radioButton1.UseVisualStyleBackColor = true;
-            this.radioButton1.CheckedChanged += new System.EventHandler(this.radioButton1_CheckedChanged);
             // 
             // button3
             // 
@@ -563,7 +556,6 @@
             this.button3.TabIndex = 42;
             this.button3.Text = "Рассчитать";
             this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
             // label8
             // 
@@ -591,7 +583,6 @@
             this.button2.TabIndex = 1;
             this.button2.Text = "Добавить торговые точки";
             this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // comboBox3
             // 
@@ -605,7 +596,6 @@
             this.comboBox3.Size = new System.Drawing.Size(302, 21);
             this.comboBox3.TabIndex = 0;
             this.comboBox3.Text = "Выбор филиала";
-            this.comboBox3.SelectedIndexChanged += new System.EventHandler(this.comboBox3_SelectedIndexChanged);
             // 
             // openFileDialog1
             // 
