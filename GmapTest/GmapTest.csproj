@@ -153,7 +153,6 @@
     <Compile Include="Logger.cs" />
     <Compile Include="Master.cs" />
     <Compile Include="Order.cs" />
-    <Compile Include="Point.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

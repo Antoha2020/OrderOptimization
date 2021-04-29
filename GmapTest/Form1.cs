@@ -26,7 +26,6 @@ namespace GmapTest
     {
         string DirName = "";
         GMapOverlay markersOverlay = new GMapOverlay("marker");
-
         GMapOverlay markersOverlayStartFin = new GMapOverlay("marker");
         bool StartFinish = false;
         double FirstLat = 0, FirstLng = 0;
@@ -42,28 +41,11 @@ namespace GmapTest
         GMapOverlay polyOverlayBordersPoly = new GMapOverlay("polygons");
         GMapOverlay polyOverlayBordersPolyChange = new GMapOverlay("polygons");
         GMapOverlay polyOverlayChange = new GMapOverlay("polygons");
-        GMapOverlay polyBorderRoute = new GMapOverlay("polygons");
-        List<Point> ChangeSector = new List<Point>();
+       List<Point> ChangeSector = new List<Point>();
         int CountInDisrt = 0;
-        bool MakeRoute = false;//true - если строим окончательный маршрут - не очищаем
-        float DeltaXOSM = 0, DeltaYOSM = 0;
-        Region Reg;
+       
         RouterDb routerDb = new RouterDb();
         Router router;
-        String dbFileName = "";
-        string[] StrArray;
-        List<string> RoutesName = new List<string>();//список названий маршрутов
-        int clr = 0; // номер цвета точки
-        int GlobalCount = 0;
-        int CountNumDay = 0;//порядковый номер дня недели
-        bool First = true;
-        List<Point>[] PointsOfRoute;
-        List<Point> PointSector = new List<Point>();//точки в секторе в порядке уменьшения расстояния к центру
-        List<Point> PointSectorOpt = new List<Point>();
-        List<Point>[] PointSectorOptRes;
-        bool ErrorOSM = false;//становится true, если OSM не находит координаты
-        List<Point> LastNodesInSec = new List<Point>();
-        string[] NameDay = { "ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС" };
         GMarkerGoogleType[] col = { GMarkerGoogleType.green_small, GMarkerGoogleType.yellow_small,
                                   GMarkerGoogleType.red_small,GMarkerGoogleType.blue_small,
                                   GMarkerGoogleType.brown_small,GMarkerGoogleType.white_small,
@@ -71,7 +53,8 @@ namespace GmapTest
                                   GMarkerGoogleType.gray_small, GMarkerGoogleType.black_small
                                    };
         GMarkerGoogleType[] orderMarker = { GMarkerGoogleType.green_pushpin };
-        int CountCZ = 1;//суммарное количество машино-зон
+        Button[] masterButtons = new Button[10];
+        CheckBox[] masterCheckBoxes = new CheckBox[10];
 
         public Form1()
         {
@@ -83,14 +66,36 @@ namespace GmapTest
             //SetComboBox();
             Constants.MASTERS.Add(new Master("Master1", 54.9244764079647, 37.40639153106871));
             Constants.MASTERS.Add(new Master("Master2", 56.32703566243706, 38.13250808457901));
-            //Constants.MASTERS.Add(new Master("Master3", 56.038196635851385, 35.95467164156729));
-            //Constants.MASTERS.Add(new Master("Master4", 55.754612213242595, 37.70177576322457));
+            Constants.MASTERS.Add(new Master("Master3", 56.038196635851385, 35.95467164156729));
+            Constants.MASTERS.Add(new Master("Master4", 55.754612213242595, 37.70177576322457));
             //Constants.MASTERS.Add(new Master("Master5", 55.887615230803846, 37.51453353697321));
             //Constants.MASTERS.Add(new Master("Master6", 55.80616204541146, 37.93649273958267));
 
             Constants.ORDERS.Add(new Order("Заказ1", 55.71421256993413, 37.67865790699016));
             Constants.ORDERS.Add(new Order("Заказ2", 55.50371364250953, 36.042567403537504));
             Constants.ORDERS.Add(new Order("Заказ3", 55.809221701400816, 38.989111949671305));
+
+            masterButtons[0] = button7;
+            masterButtons[1] = button8;
+            masterButtons[2] = button9;
+            masterButtons[3] = button10;
+            masterButtons[4] = button11;
+            masterButtons[5] = button12;
+            masterButtons[6] = button13;
+            masterButtons[7] = button14;
+            masterButtons[8] = button15;
+            masterButtons[9] = button16;
+
+            masterCheckBoxes[0] = checkBox1;
+            masterCheckBoxes[1] = checkBox2;
+            masterCheckBoxes[2] = checkBox3;
+            masterCheckBoxes[3] = checkBox4;
+            masterCheckBoxes[4] = checkBox5;
+            masterCheckBoxes[5] = checkBox6;
+            masterCheckBoxes[6] = checkBox7;
+            masterCheckBoxes[7] = checkBox8;
+            masterCheckBoxes[8] = checkBox9;
+            masterCheckBoxes[9] = checkBox10;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -103,6 +108,7 @@ namespace GmapTest
             gMapControl1.DragButton = MouseButtons.Left;
 
             FillCombo1();
+            FillMasters();
             ShowMarkers();
             Logger.Log.Info("Form1 загружена");
         }
@@ -116,6 +122,21 @@ namespace GmapTest
             if (comboBox1.Items.Count > 0)
                 comboBox1.SelectedIndex = 0;
         }
+
+        private void FillMasters()
+        {
+            panel1.Height = 182;
+            groupBox1.Height = 20;
+            for (int i=0;i<Constants.MASTERS.Count;i++)
+            {
+                masterButtons[i].Visible = true;
+                masterButtons[i].Text = Constants.MASTERS[i].Name;
+                masterCheckBoxes[i].Visible = true;
+                panel1.Height += 30;
+                groupBox1.Height += 30;
+            }           
+        }
+
         private void googleMapsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Logger.Log.Info("Выбрано Google карту");
@@ -274,7 +295,6 @@ namespace GmapTest
             }
             catch
             {
-                ErrorOSM = true;
                 return 0;
             }
 
@@ -456,16 +476,16 @@ namespace GmapTest
 
         private void NewChangeSector()
         {
-            ChangeSector.Reverse();
-            for (int i = 0; i < ChangeSector.Count; i++)
-                for (int j = i + 1; j < ChangeSector.Count; j++)
-                {
-                    if (ChangeSector[i].CodeTradePoint == ChangeSector[j].CodeTradePoint)
-                    {
-                        ChangeSector.RemoveAt(j);
-                        j--;
-                    }
-                }
+            //ChangeSector.Reverse();
+            //for (int i = 0; i < ChangeSector.Count; i++)
+            //    for (int j = i + 1; j < ChangeSector.Count; j++)
+            //    {
+            //        if (ChangeSector[i].CodeTradePoint == ChangeSector[j].CodeTradePoint)
+            //        {
+            //            ChangeSector.RemoveAt(j);
+            //            j--;
+            //        }
+            //    }
         }
 
         //public void InsidePolygonChangeSector(List<double> xp, List<double> yp)
