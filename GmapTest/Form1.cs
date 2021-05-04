@@ -59,15 +59,16 @@ namespace GmapTest
         public Form1()
         {
             InitializeComponent();
+            DBHandler.GetMasters();
             gMapControl1.MapProvider = GMap.NET.MapProviders.GoogleSatelliteMapProvider.Instance;
             GMaps.Instance.Mode = AccessMode.ServerOnly;
             Logger.Log.Info("Main form start");
             //listRoutes = DBHandler.GetListRoutes();//получение всех маршрутов, которые есть в системе
             //SetComboBox();
-            Constants.MASTERS.Add(new Master("Master1", 54.9244764079647, 37.40639153106871));
-            Constants.MASTERS.Add(new Master("Master2", 56.32703566243706, 38.13250808457901));
-            Constants.MASTERS.Add(new Master("Master3", 56.038196635851385, 35.95467164156729));
-            Constants.MASTERS.Add(new Master("Master4", 55.754612213242595, 37.70177576322457));
+            //Constants.MASTERS.Add(new Master("Master1", 54.9244764079647, 37.40639153106871));
+            //Constants.MASTERS.Add(new Master("Master2", 56.32703566243706, 38.13250808457901,true));
+            //Constants.MASTERS.Add(new Master("Master3", 56.038196635851385, 35.95467164156729));
+            //Constants.MASTERS.Add(new Master("Master4", 55.754612213242595, 37.70177576322457));
             //Constants.MASTERS.Add(new Master("Master5", 55.887615230803846, 37.51453353697321));
             //Constants.MASTERS.Add(new Master("Master6", 55.80616204541146, 37.93649273958267));
 
@@ -171,28 +172,21 @@ namespace GmapTest
 
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
-            toolStripButton2.Checked = false;
-            if (toolStripButton1.Checked)
-            {
-                panel1.Visible = true;
-                panel2.Visible = false;
+            //toolStripButton2.Checked = false;
+            //if (toolStripButton1.Checked)
+            //{
+            //    panel1.Visible = true;
+            //    panel2.Visible = false;
 
-            }
-            else
-                panel1.Visible = false;
+            //}
+            //else
+            //    panel1.Visible = false;
 
         }
 
         private void toolStripButton2_Click(object sender, EventArgs e)
         {
-            toolStripButton1.Checked = false;
-            if (toolStripButton2.Checked)
-            {
-                panel1.Visible = false;
-                panel2.Visible = true;
-            }
-            else
-                panel2.Visible = false;
+            panel3.Visible = true;
 
         }
 
@@ -472,6 +466,21 @@ namespace GmapTest
 
                 }
             }
+        }
+
+        private void toolStripButton3_Click(object sender, EventArgs e)
+        {
+            new ManageMasters().ShowDialog();
+        }
+
+        private void button18_Click(object sender, EventArgs e)
+        {
+            panel3.Visible = false; 
+        }
+
+        private void button17_Click(object sender, EventArgs e)
+        {
+            panel3.Visible = false;
         }
 
         private void NewChangeSector()

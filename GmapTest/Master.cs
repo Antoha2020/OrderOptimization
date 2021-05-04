@@ -17,15 +17,18 @@ namespace GmapTest
         public double CurrentLat { get; set; }
         public double CurrentLon { get; set; }
 
+        public bool InWork { get; set; }
+
         public GMapRoute currentRoute = null;
         double currentDistance = 0;
-        public Master(string name, double startLat, double startLon)
+        public Master(string name, double startLat, double startLon, bool inWork)
         {
             this.Name = name;
             this.StartLat = startLat;
             this.StartLon = startLon;
             this.CurrentLat = startLat;
             this.CurrentLon = startLon;
+            this.InWork = inWork;
         }
 
         public void SetGMapRoute(List<PointLatLng> routePoints, double distance)

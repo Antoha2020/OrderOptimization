@@ -2,6 +2,8 @@
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
+using System.Data.SQLite;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -102,6 +104,105 @@ namespace GmapTest
 
             return listData;
         }
+
+        public const string CONNECTION_STRING = "Data Source=db/OrdersOptimization.db;Version=3;";
+               
+        public static void GetMasters()
+        {
+            if (!File.Exists("db/OrdersOptimization.db"))
+                return;
+            Constants.MASTERS.Clear();
+            SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
+            try
+            {
+                conn.Open();
+                SQLiteCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT * FROM masters";
+                SQLiteDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    Master master = new Master(reader["name"].ToString(),
+                        Convert.ToDouble(reader["startLat"].ToString().Replace('.', ',')),
+                        Convert.ToDouble(reader["startLon"].ToString().Replace('.', ',')),
+                        //Convert.ToDouble(reader["currentLat"].ToString().Replace('.', ',')),
+                        //Convert.ToDouble(reader["currentLon"].ToString().Replace('.', ',')),
+                        Convert.ToBoolean(reader["inWork"].ToString()));
+                    Constants.MASTERS.Add(master);
+                }
+                reader.Close();
+                conn.Close();
+                conn.Dispose();
+            }
+            catch (Exception e) { }
+        }
+
+        public static void AddMaster(string name, string lat, string lon, bool inWork)
+        {
+            SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
+            try
+            {
+                conn.Open();
+                SQLiteCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "INSERT INTO masters (name, startLat, startLon, currentLat, currentLon, inWork) VALUES ('" +
+                    name + "','" + lat + "','" + lon + "', '" + lat + "','" + lon + "','" + inWork + "')";
+                cmd.ExecuteNonQuery();
+                conn.Close();
+                conn.Dispose();
+                conn = null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Обновить данные о пользователе
+        /// </summary>
         
+        public static void UpdateMaster(string name, string lat, string lon, bool inWork)
+        {
+            SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
+            try
+            {
+                conn.Open();
+                SQLiteCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "UPDATE masters SET startLat='" + lat + "', startLon='" + lon +
+                    "', inWork='" + inWork + "' WHERE name='" + name + "'";
+                cmd.ExecuteNonQuery();
+                conn.Close();
+                conn.Dispose();
+                conn = null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Удалить мастера
+        /// </summary>
+        /// <param name="login"></param>
+        /// <returns></returns>
+        public static bool DeleteMaster(string name)
+        {
+            bool res = true;
+            SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
+            try
+            {
+                conn.Open();
+                SQLiteCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "DELETE FROM masters WHERE name='" + name + "'";
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex) { res = false; }
+            finally
+            {
+                conn.Close();
+                conn.Dispose();
+            }
+            return res;
+        }
     }
 }
