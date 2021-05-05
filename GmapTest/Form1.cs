@@ -111,11 +111,13 @@ namespace GmapTest
             FillCombo1();
             FillMasters();
             ShowMarkers();
+            
             Logger.Log.Info("Form1 загружена");
         }
 
         private void FillCombo1()
         {
+            comboBox1.Items.Clear();
             foreach (Order ord in Constants.ORDERS)
             {
                 comboBox1.Items.Add(ord.Name);
@@ -126,6 +128,10 @@ namespace GmapTest
 
         private void FillMasters()
         {
+            for (int i = 0; i < masterButtons.Length; i++)
+            {
+                masterButtons[i].Visible = false;
+            }
             panel1.Height = 182;
             groupBox1.Height = 20;
             for (int i=0;i<Constants.MASTERS.Count;i++)
@@ -338,6 +344,13 @@ namespace GmapTest
 
         private void gMapControl1_MouseClick(object sender, MouseEventArgs e)
         {
+
+            if(panel3.Visible)
+            {
+                textBox13.Text = gMapControl1.FromLocalToLatLng(e.X, e.Y).Lat.ToString();
+                textBox14.Text = gMapControl1.FromLocalToLatLng(e.X, e.Y).Lng.ToString();
+                 
+            }
             //определение расстояния по прямой
 
             List<double> xp = new List<double>();
@@ -471,6 +484,10 @@ namespace GmapTest
         private void toolStripButton3_Click(object sender, EventArgs e)
         {
             new ManageMasters().ShowDialog();
+            FillCombo1();
+            FillMasters();
+            ShowMarkers();
+           // this.Refresh();
         }
 
         private void button18_Click(object sender, EventArgs e)
@@ -480,7 +497,25 @@ namespace GmapTest
 
         private void button17_Click(object sender, EventArgs e)
         {
-            panel3.Visible = false;
+            try
+            {
+                string name = textBox15.Text;
+                string description = textBox10.Text;
+                string lat = textBox13.Text;
+                string lon = textBox14.Text;
+                string city = textBox1.Text;
+                string street = textBox2.Text;
+                DBHandler.AddOrder(name, description, lat, lon, city, street);
+            }
+            catch(Exception ex)
+            {
+
+            }
+        }
+
+        private void button19_Click(object sender, EventArgs e)
+        {
+
         }
 
         private void NewChangeSector()
