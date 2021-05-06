@@ -211,23 +211,37 @@ namespace GmapTest
         {
             if (!File.Exists("db/OrdersOptimization.db"))
                 return;
-            Constants.MASTERS.Clear();
+            Constants.ORDERS.Clear();
             SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
             try
             {
                 conn.Open();
                 SQLiteCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "SELECT * FROM masters";
+                cmd.CommandText = "SELECT * FROM orders";
                 SQLiteDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    Master master = new Master(reader["name"].ToString(),
-                        Convert.ToDouble(reader["startLat"].ToString().Replace('.', ',')),
-                        Convert.ToDouble(reader["startLon"].ToString().Replace('.', ',')),
-                        //Convert.ToDouble(reader["currentLat"].ToString().Replace('.', ',')),
-                        //Convert.ToDouble(reader["currentLon"].ToString().Replace('.', ',')),
-                        Convert.ToBoolean(reader["inWork"].ToString()));
-                    Constants.MASTERS.Add(master);
+                    Order order = new Order(reader["id"].ToString(), reader["name"].ToString(),
+                        reader["lat"].ToString().Replace('.', ','),
+                        reader["lon"].ToString().Replace('.', ','),
+                        //Convert.ToDateTime(reader["dateCreate"].ToString()),
+                        reader["description"].ToString(),
+                        reader["city"].ToString(),
+                        reader["street"].ToString(),
+                        reader["house"].ToString(),
+                        reader["flat"].ToString(),
+                        reader["office"].ToString(),
+                        reader["porch"].ToString(),
+                        reader["floor"].ToString(),
+                        //Convert.ToBoolean(reader["intercom"].ToString()),
+                        //Convert.ToBoolean(reader["inWork"].ToString()),
+                        //Convert.ToDateTime(reader["dateOrder"].ToString()),
+                        reader["timeBeg"].ToString(),
+                        reader["timeEnd"].ToString(),
+                        reader["phone1"].ToString(),
+                        reader["phone2"].ToString()
+                        );
+                    Constants.ORDERS.Add(order);
                 }
                 reader.Close();
                 conn.Close();
@@ -236,15 +250,18 @@ namespace GmapTest
             catch (Exception e) { }
         }
 
-        public static void AddOrder(string name, string description, string lat, string lon, string city, string street)
+        public static void AddOrder(string name, string description, string lat, string lon, string city, string street, string house,
+           string flat, string office, string porch, bool intercom, string floor, string dateOrder)
         {
             SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
             try
             {
                 conn.Open();
                 SQLiteCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "INSERT INTO orders (name, description, lat, lon, city, street) VALUES ('" +
-                    name + "','" + description + "','" + lat + "', '" + lon + "','" + city + "','" + street + "')";
+                cmd.CommandText = "INSERT INTO orders (name, description, lat, lon, city, street, house, flat, office," +
+                    "porch, intercom, floor, dateOrder) VALUES ('" +
+                    name + "','" + description + "','" + lat + "', '" + lon + "','" + city + "','" + street +
+                    "','" + house + "','" + flat + "','" + office + "','" + porch + "','" + intercom.ToString() + "','" + floor + "','" + dateOrder + "')";
                 cmd.ExecuteNonQuery();
                 conn.Close();
                 conn.Dispose();
@@ -285,7 +302,7 @@ namespace GmapTest
         /// </summary>
         /// <param name="login"></param>
         /// <returns></returns>
-        public static bool DeleteOrder(string name)
+        public static bool DeleteOrder(string id)
         {
             bool res = true;
             SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
@@ -293,7 +310,7 @@ namespace GmapTest
             {
                 conn.Open();
                 SQLiteCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "DELETE FROM masters WHERE name='" + name + "'";
+                cmd.CommandText = "DELETE FROM orders WHERE id='" + id + "'";
                 cmd.ExecuteNonQuery();
             }
             catch (Exception ex) { res = false; }

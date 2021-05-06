@@ -72,9 +72,9 @@ namespace GmapTest
             //Constants.MASTERS.Add(new Master("Master5", 55.887615230803846, 37.51453353697321));
             //Constants.MASTERS.Add(new Master("Master6", 55.80616204541146, 37.93649273958267));
 
-            Constants.ORDERS.Add(new Order("Заказ1", 55.71421256993413, 37.67865790699016));
-            Constants.ORDERS.Add(new Order("Заказ2", 55.50371364250953, 36.042567403537504));
-            Constants.ORDERS.Add(new Order("Заказ3", 55.809221701400816, 38.989111949671305));
+            //Constants.ORDERS.Add(new Order("Заказ1", "55.71421256993413", "37.67865790699016"));
+            //Constants.ORDERS.Add(new Order("Заказ2", "55.50371364250953", "36.042567403537504"));
+            //Constants.ORDERS.Add(new Order("Заказ3", "55.809221701400816", "38.989111949671305"));
 
             masterButtons[0] = button7;
             masterButtons[1] = button8;
@@ -108,6 +108,7 @@ namespace GmapTest
             gMapControl1.ShowCenter = false;
             gMapControl1.DragButton = MouseButtons.Left;
 
+            DBHandler.GetOrders();
             FillCombo1();
             FillMasters();
             ShowMarkers();
@@ -132,7 +133,7 @@ namespace GmapTest
             {
                 masterButtons[i].Visible = false;
             }
-            panel1.Height = 182;
+            panel1.Height = 215;
             groupBox1.Height = 20;
             for (int i=0;i<Constants.MASTERS.Count;i++)
             {
@@ -235,7 +236,7 @@ namespace GmapTest
             }
             if (order != null)
             {
-                GMarkerGoogle marker = new GMarkerGoogle(new PointLatLng(order.lat, order.lon), orderMarker[0]);
+                GMarkerGoogle marker = new GMarkerGoogle(new PointLatLng(Convert.ToDouble(order.Lat), Convert.ToDouble(order.Lon)), orderMarker[0]);
                 marker.ToolTip = new GMapRoundedToolTip(marker);
                 marker.ToolTipText = order.Name;
                 markersOverlay.Markers.Add(marker);
@@ -248,7 +249,7 @@ namespace GmapTest
                 markerMaster.ToolTipText = Constants.MASTERS[k++].Name;
                 markersOverlay.Markers.Add(markerMaster);
             }
-            gMapControl1.Position = new PointLatLng(order.lat, order.lon);
+            gMapControl1.Position = new PointLatLng(Convert.ToDouble(order.Lat), Convert.ToDouble(order.Lon));
             gMapControl1.Overlays.Add(markersOverlay);
             gMapControl1.Refresh();
         }
@@ -270,7 +271,7 @@ namespace GmapTest
             {
                 var profile = Vehicle.Car.Fastest();
 
-                var route = router.Calculate(profile, (float)order.lat, (float)order.lon,
+                var route = router.Calculate(profile, (float)Convert.ToDouble(order.Lat), (float)Convert.ToDouble(order.Lon),
                     (float)master.CurrentLat, (float)master.CurrentLon);
                 var routeGeoJson = route.ToGeoJson();
 
@@ -505,7 +506,15 @@ namespace GmapTest
                 string lon = textBox14.Text;
                 string city = textBox1.Text;
                 string street = textBox2.Text;
-                DBHandler.AddOrder(name, description, lat, lon, city, street);
+                string house = textBox3.Text;
+                string flat = textBox5.Text;
+                string office = textBox4.Text;
+                string porch = textBox6.Text;
+                bool intercom = checkBox11.Checked;
+                string dateOrder = dateTimePicker2.Value.ToShortDateString();
+                string floor = textBox7.Text;
+                DBHandler.AddOrder(name, description, lat, lon, city, street, house, flat, office, porch, intercom, floor, dateOrder);
+                MessageBox.Show("Заказ " + name + " успешно создан!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch(Exception ex)
             {
@@ -513,9 +522,69 @@ namespace GmapTest
             }
         }
 
+        private void RefreshTable()
+        {
+            DBHandler.GetOrders();
+            dataGridView1.Rows.Clear();
+            for (int i = 0; i < Constants.ORDERS.Count; i++)
+            {
+                dataGridView1.Rows.Add(Constants.ORDERS[i].Id, Constants.ORDERS[i].Name, 
+                    Constants.ORDERS[i].DateCreate.ToShortDateString(),
+                    Constants.ORDERS[i].Name, 
+                    Constants.ORDERS[i].Phone1,
+                    Constants.ORDERS[i].DateOrder.ToShortDateString(),
+                    Constants.ORDERS[i].Description,
+                    Constants.ORDERS[i].City,
+                    Constants.ORDERS[i].Street,
+                    Constants.ORDERS[i].House,
+                    Constants.ORDERS[i].Flat,
+                    Constants.ORDERS[i].Office,
+                    Constants.ORDERS[i].Porch,
+                    Constants.ORDERS[i].Floor,
+                    Constants.ORDERS[i].Intercom
+                    //Constants.ORDERS[i].Intercom,
+                    //Constants.ORDERS[i].Intercom,
+                    //Constants.ORDERS[i].Intercom,
+                    //Constants.ORDERS[i].Intercom,
+                    );
+            }
+        }
+
         private void button19_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void radioButton4_CheckedChanged(object sender, EventArgs e)
+        {
+            button1.Enabled = radioButton4.Checked ? false : true;
+        }
+
+        private void panel3_VisibleChanged(object sender, EventArgs e)
+        {
+            if(panel3.Visible)
+            {
+                dataGridView1.Rows.Clear();
+                for (int i = 0; i < Constants.ORDERS.Count; i++)
+                {
+                    dataGridView1.Rows.Add(Constants.ORDERS[i].Id,"", Constants.ORDERS[i].Name, Constants.ORDERS[i].Phone1,"",
+                        Constants.ORDERS[i].Description, Constants.ORDERS[i].City);
+                }
+            }
+        }
+
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        {
+            markersOverlay.Routes.Add(Constants.MASTERS[1].currentRoute);
+            gMapControl1.Overlays.Add(markersOverlay);
+            gMapControl1.Refresh();
+        }
+
+        private void checkBox3_CheckedChanged(object sender, EventArgs e)
+        {
+            markersOverlay.Routes.Add(Constants.MASTERS[2].currentRoute);
+            gMapControl1.Overlays.Add(markersOverlay);
+            gMapControl1.Refresh();
         }
 
         private void NewChangeSector()
