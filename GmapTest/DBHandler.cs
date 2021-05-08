@@ -224,7 +224,7 @@ namespace GmapTest
                     Order order = new Order(reader["id"].ToString(), reader["name"].ToString(),
                         reader["lat"].ToString().Replace('.', ','),
                         reader["lon"].ToString().Replace('.', ','),
-                        //Convert.ToDateTime(reader["dateCreate"].ToString()),
+                        reader["dateCreate"].ToString(),
                         reader["description"].ToString(),
                         reader["city"].ToString(),
                         reader["street"].ToString(),
@@ -233,13 +233,13 @@ namespace GmapTest
                         reader["office"].ToString(),
                         reader["porch"].ToString(),
                         reader["floor"].ToString(),
-                        //Convert.ToBoolean(reader["intercom"].ToString()),
-                        //Convert.ToBoolean(reader["inWork"].ToString()),
-                        //Convert.ToDateTime(reader["dateOrder"].ToString()),
+                        Convert.ToBoolean(reader["intercom"].ToString()),
+                        reader["dateOrder"].ToString(),
                         reader["timeBeg"].ToString(),
                         reader["timeEnd"].ToString(),
                         reader["phone1"].ToString(),
-                        reader["phone2"].ToString()
+                        reader["phone2"].ToString(),
+                        reader["master"].ToString()
                         );
                     Constants.ORDERS.Add(order);
                 }
@@ -251,17 +251,20 @@ namespace GmapTest
         }
 
         public static void AddOrder(string name, string description, string lat, string lon, string city, string street, string house,
-           string flat, string office, string porch, bool intercom, string floor, string dateOrder)
+           string flat, string office, string porch, bool intercom, string floor, string dateOrder, string timeBeg, string timeEnd,
+           string phone1, string phone2, string master)
         {
+            string dateCreate = DateTime.Now.ToShortDateString();
             SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
             try
             {
                 conn.Open();
                 SQLiteCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "INSERT INTO orders (name, description, lat, lon, city, street, house, flat, office," +
-                    "porch, intercom, floor, dateOrder) VALUES ('" +
+                    "porch, intercom, floor, dateOrder, dateCreate, timeBeg, timeEnd, phone1, phone2, master) VALUES ('" +
                     name + "','" + description + "','" + lat + "', '" + lon + "','" + city + "','" + street +
-                    "','" + house + "','" + flat + "','" + office + "','" + porch + "','" + intercom.ToString() + "','" + floor + "','" + dateOrder + "')";
+                    "','" + house + "','" + flat + "','" + office + "','" + porch + "','" + intercom.ToString() + "','" + floor + "','" + dateOrder + 
+                    "','" + dateCreate + "','" + timeBeg + "','" + timeEnd + "','" + phone1 + "','" + phone2 + "','" + master + "')";
                 cmd.ExecuteNonQuery();
                 conn.Close();
                 conn.Dispose();

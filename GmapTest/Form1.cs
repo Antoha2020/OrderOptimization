@@ -135,6 +135,7 @@ namespace GmapTest
             }
             panel1.Height = 215;
             groupBox1.Height = 20;
+            comboBox2.Items.Add("Нет");
             for (int i=0;i<Constants.MASTERS.Count;i++)
             {
                 masterButtons[i].Visible = true;
@@ -142,7 +143,10 @@ namespace GmapTest
                 masterCheckBoxes[i].Visible = true;
                 panel1.Height += 30;
                 groupBox1.Height += 30;
-            }           
+
+                comboBox2.Items.Add(Constants.MASTERS[i].Name);
+            }
+            comboBox2.SelectedIndex = 0;
         }
 
         private void googleMapsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -513,7 +517,13 @@ namespace GmapTest
                 bool intercom = checkBox11.Checked;
                 string dateOrder = dateTimePicker2.Value.ToShortDateString();
                 string floor = textBox7.Text;
-                DBHandler.AddOrder(name, description, lat, lon, city, street, house, flat, office, porch, intercom, floor, dateOrder);
+                string timeBeg = dateTimePicker3.Value.ToShortTimeString();
+                string timeEnd = dateTimePicker4.Value.ToShortTimeString();
+                string phone1 = textBox8.Text;
+                string phone2 = textBox9.Text;
+                string master = comboBox2.Text;
+                DBHandler.AddOrder(name, description, lat, lon, city, street, house, flat, office, porch, intercom, floor, dateOrder,
+                    timeBeg, timeEnd, phone1, phone2, master);
                 MessageBox.Show("Заказ " + name + " успешно создан!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch(Exception ex)
@@ -528,7 +538,7 @@ namespace GmapTest
             dataGridView1.Rows.Clear();
             for (int i = 0; i < Constants.ORDERS.Count; i++)
             {
-                dataGridView1.Rows.Add(Constants.ORDERS[i].Id, Constants.ORDERS[i].Name, 
+                dataGridView1.Rows.Add(Constants.ORDERS[i].Id, 
                     Constants.ORDERS[i].DateCreate.ToShortDateString(),
                     Constants.ORDERS[i].Name, 
                     Constants.ORDERS[i].Phone1,
@@ -541,11 +551,12 @@ namespace GmapTest
                     Constants.ORDERS[i].Office,
                     Constants.ORDERS[i].Porch,
                     Constants.ORDERS[i].Floor,
-                    Constants.ORDERS[i].Intercom
-                    //Constants.ORDERS[i].Intercom,
-                    //Constants.ORDERS[i].Intercom,
-                    //Constants.ORDERS[i].Intercom,
-                    //Constants.ORDERS[i].Intercom,
+                    Constants.ORDERS[i].Intercom,
+                    Constants.ORDERS[i].Phone2,
+                    Constants.ORDERS[i].TimeBeg,
+                    Constants.ORDERS[i].TimeEnd,
+                    Constants.ORDERS[i].Lat,
+                    Constants.ORDERS[i].Lon
                     );
             }
         }
@@ -564,14 +575,11 @@ namespace GmapTest
         {
             if(panel3.Visible)
             {
-                dataGridView1.Rows.Clear();
-                for (int i = 0; i < Constants.ORDERS.Count; i++)
-                {
-                    dataGridView1.Rows.Add(Constants.ORDERS[i].Id,"", Constants.ORDERS[i].Name, Constants.ORDERS[i].Phone1,"",
-                        Constants.ORDERS[i].Description, Constants.ORDERS[i].City);
-                }
+                RefreshTable();
             }
         }
+
+       
 
         private void checkBox2_CheckedChanged(object sender, EventArgs e)
         {
@@ -585,6 +593,11 @@ namespace GmapTest
             markersOverlay.Routes.Add(Constants.MASTERS[2].currentRoute);
             gMapControl1.Overlays.Add(markersOverlay);
             gMapControl1.Refresh();
+        }
+
+        private void button20_Click(object sender, EventArgs e)
+        {
+
         }
 
         private void NewChangeSector()

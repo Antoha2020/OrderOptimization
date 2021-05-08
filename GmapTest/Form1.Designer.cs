@@ -43,6 +43,9 @@
             this.toolStripButton6 = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton5 = new System.Windows.Forms.ToolStripButton();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.groupBox24 = new System.Windows.Forms.GroupBox();
+            this.radioButton4 = new System.Windows.Forms.RadioButton();
+            this.radioButton3 = new System.Windows.Forms.RadioButton();
             this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.comboBox1 = new System.Windows.Forms.ComboBox();
@@ -89,9 +92,10 @@
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.groupBox23 = new System.Windows.Forms.GroupBox();
+            this.dateTimePicker4 = new System.Windows.Forms.DateTimePicker();
             this.groupBox22 = new System.Windows.Forms.GroupBox();
+            this.dateTimePicker3 = new System.Windows.Forms.DateTimePicker();
             this.groupBox21 = new System.Windows.Forms.GroupBox();
-            this.checkBox12 = new System.Windows.Forms.CheckBox();
             this.groupBox20 = new System.Windows.Forms.GroupBox();
             this.dateTimePicker2 = new System.Windows.Forms.DateTimePicker();
             this.groupBox19 = new System.Windows.Forms.GroupBox();
@@ -129,11 +133,7 @@
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.button18 = new System.Windows.Forms.Button();
             this.button17 = new System.Windows.Forms.Button();
-            this.groupBox24 = new System.Windows.Forms.GroupBox();
-            this.radioButton3 = new System.Windows.Forms.RadioButton();
-            this.radioButton4 = new System.Windows.Forms.RadioButton();
-            this.dateTimePicker3 = new System.Windows.Forms.DateTimePicker();
-            this.dateTimePicker4 = new System.Windows.Forms.DateTimePicker();
+            this.comboBox2 = new System.Windows.Forms.ComboBox();
             this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column15 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -149,7 +149,6 @@
             this.Column10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column11 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.Column13 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column16 = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.Column17 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column18 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column19 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -158,6 +157,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             this.toolStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
+            this.groupBox24.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -184,7 +184,6 @@
             this.groupBox7.SuspendLayout();
             this.groupBox6.SuspendLayout();
             this.groupBox5.SuspendLayout();
-            this.groupBox24.SuspendLayout();
             this.SuspendLayout();
             // 
             // gMapControl1
@@ -354,6 +353,41 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(212, 523);
             this.panel1.TabIndex = 5;
+            // 
+            // groupBox24
+            // 
+            this.groupBox24.Controls.Add(this.radioButton4);
+            this.groupBox24.Controls.Add(this.radioButton3);
+            this.groupBox24.Dock = System.Windows.Forms.DockStyle.Top;
+            this.groupBox24.Location = new System.Drawing.Point(0, 0);
+            this.groupBox24.Name = "groupBox24";
+            this.groupBox24.Size = new System.Drawing.Size(210, 42);
+            this.groupBox24.TabIndex = 84;
+            this.groupBox24.TabStop = false;
+            this.groupBox24.Text = "Расстояние";
+            // 
+            // radioButton4
+            // 
+            this.radioButton4.AutoSize = true;
+            this.radioButton4.Checked = true;
+            this.radioButton4.Location = new System.Drawing.Point(23, 19);
+            this.radioButton4.Name = "radioButton4";
+            this.radioButton4.Size = new System.Drawing.Size(78, 17);
+            this.radioButton4.TabIndex = 1;
+            this.radioButton4.TabStop = true;
+            this.radioButton4.Text = "по прямой";
+            this.radioButton4.UseVisualStyleBackColor = true;
+            this.radioButton4.CheckedChanged += new System.EventHandler(this.radioButton4_CheckedChanged);
+            // 
+            // radioButton3
+            // 
+            this.radioButton3.AutoSize = true;
+            this.radioButton3.Location = new System.Drawing.Point(119, 19);
+            this.radioButton3.Name = "radioButton3";
+            this.radioButton3.Size = new System.Drawing.Size(69, 17);
+            this.radioButton3.TabIndex = 0;
+            this.radioButton3.Text = "маршрут";
+            this.radioButton3.UseVisualStyleBackColor = true;
             // 
             // dateTimePicker1
             // 
@@ -832,7 +866,6 @@
             this.Column10,
             this.Column11,
             this.Column13,
-            this.Column16,
             this.Column17,
             this.Column18,
             this.Column19,
@@ -888,6 +921,15 @@
             this.groupBox23.TabStop = false;
             this.groupBox23.Text = "Время окончания работы";
             // 
+            // dateTimePicker4
+            // 
+            this.dateTimePicker4.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dateTimePicker4.Format = System.Windows.Forms.DateTimePickerFormat.Time;
+            this.dateTimePicker4.Location = new System.Drawing.Point(3, 16);
+            this.dateTimePicker4.Name = "dateTimePicker4";
+            this.dateTimePicker4.Size = new System.Drawing.Size(150, 20);
+            this.dateTimePicker4.TabIndex = 0;
+            // 
             // groupBox22
             // 
             this.groupBox22.Controls.Add(this.dateTimePicker3);
@@ -898,24 +940,24 @@
             this.groupBox22.TabStop = false;
             this.groupBox22.Text = "Время начала работы";
             // 
+            // dateTimePicker3
+            // 
+            this.dateTimePicker3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dateTimePicker3.Format = System.Windows.Forms.DateTimePickerFormat.Time;
+            this.dateTimePicker3.Location = new System.Drawing.Point(3, 16);
+            this.dateTimePicker3.Name = "dateTimePicker3";
+            this.dateTimePicker3.Size = new System.Drawing.Size(150, 20);
+            this.dateTimePicker3.TabIndex = 0;
+            // 
             // groupBox21
             // 
-            this.groupBox21.Controls.Add(this.checkBox12);
+            this.groupBox21.Controls.Add(this.comboBox2);
             this.groupBox21.Location = new System.Drawing.Point(194, 67);
             this.groupBox21.Name = "groupBox21";
             this.groupBox21.Size = new System.Drawing.Size(156, 41);
             this.groupBox21.TabIndex = 22;
             this.groupBox21.TabStop = false;
-            this.groupBox21.Text = "В работе";
-            // 
-            // checkBox12
-            // 
-            this.checkBox12.AutoSize = true;
-            this.checkBox12.Location = new System.Drawing.Point(69, 16);
-            this.checkBox12.Name = "checkBox12";
-            this.checkBox12.Size = new System.Drawing.Size(15, 14);
-            this.checkBox12.TabIndex = 0;
-            this.checkBox12.UseVisualStyleBackColor = true;
+            this.groupBox21.Text = "Бригада";
             // 
             // groupBox20
             // 
@@ -1025,6 +1067,7 @@
             this.button20.TabIndex = 15;
             this.button20.Text = "Удалить";
             this.button20.UseVisualStyleBackColor = true;
+            this.button20.Click += new System.EventHandler(this.button20_Click);
             // 
             // button19
             // 
@@ -1256,58 +1299,14 @@
             this.button17.UseVisualStyleBackColor = true;
             this.button17.Click += new System.EventHandler(this.button17_Click);
             // 
-            // groupBox24
+            // comboBox2
             // 
-            this.groupBox24.Controls.Add(this.radioButton4);
-            this.groupBox24.Controls.Add(this.radioButton3);
-            this.groupBox24.Dock = System.Windows.Forms.DockStyle.Top;
-            this.groupBox24.Location = new System.Drawing.Point(0, 0);
-            this.groupBox24.Name = "groupBox24";
-            this.groupBox24.Size = new System.Drawing.Size(210, 42);
-            this.groupBox24.TabIndex = 84;
-            this.groupBox24.TabStop = false;
-            this.groupBox24.Text = "Расстояние";
-            // 
-            // radioButton3
-            // 
-            this.radioButton3.AutoSize = true;
-            this.radioButton3.Location = new System.Drawing.Point(119, 19);
-            this.radioButton3.Name = "radioButton3";
-            this.radioButton3.Size = new System.Drawing.Size(69, 17);
-            this.radioButton3.TabIndex = 0;
-            this.radioButton3.Text = "маршрут";
-            this.radioButton3.UseVisualStyleBackColor = true;
-            // 
-            // radioButton4
-            // 
-            this.radioButton4.AutoSize = true;
-            this.radioButton4.Checked = true;
-            this.radioButton4.Location = new System.Drawing.Point(23, 19);
-            this.radioButton4.Name = "radioButton4";
-            this.radioButton4.Size = new System.Drawing.Size(78, 17);
-            this.radioButton4.TabIndex = 1;
-            this.radioButton4.TabStop = true;
-            this.radioButton4.Text = "по прямой";
-            this.radioButton4.UseVisualStyleBackColor = true;
-            this.radioButton4.CheckedChanged += new System.EventHandler(this.radioButton4_CheckedChanged);
-            // 
-            // dateTimePicker3
-            // 
-            this.dateTimePicker3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dateTimePicker3.Format = System.Windows.Forms.DateTimePickerFormat.Time;
-            this.dateTimePicker3.Location = new System.Drawing.Point(3, 16);
-            this.dateTimePicker3.Name = "dateTimePicker3";
-            this.dateTimePicker3.Size = new System.Drawing.Size(150, 20);
-            this.dateTimePicker3.TabIndex = 0;
-            // 
-            // dateTimePicker4
-            // 
-            this.dateTimePicker4.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dateTimePicker4.Format = System.Windows.Forms.DateTimePickerFormat.Time;
-            this.dateTimePicker4.Location = new System.Drawing.Point(3, 16);
-            this.dateTimePicker4.Name = "dateTimePicker4";
-            this.dateTimePicker4.Size = new System.Drawing.Size(150, 20);
-            this.dateTimePicker4.TabIndex = 0;
+            this.comboBox2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.comboBox2.FormattingEnabled = true;
+            this.comboBox2.Location = new System.Drawing.Point(3, 16);
+            this.comboBox2.Name = "comboBox2";
+            this.comboBox2.Size = new System.Drawing.Size(150, 21);
+            this.comboBox2.TabIndex = 0;
             // 
             // Column1
             // 
@@ -1384,13 +1383,6 @@
             this.Column13.HeaderText = "Телефон 2";
             this.Column13.Name = "Column13";
             // 
-            // Column16
-            // 
-            this.Column16.HeaderText = "В работе";
-            this.Column16.Name = "Column16";
-            this.Column16.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.Column16.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-            // 
             // Column17
             // 
             this.Column17.HeaderText = "Начало";
@@ -1436,6 +1428,8 @@
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
             this.panel1.ResumeLayout(false);
+            this.groupBox24.ResumeLayout(false);
+            this.groupBox24.PerformLayout();
             this.groupBox3.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
@@ -1449,7 +1443,6 @@
             this.groupBox23.ResumeLayout(false);
             this.groupBox22.ResumeLayout(false);
             this.groupBox21.ResumeLayout(false);
-            this.groupBox21.PerformLayout();
             this.groupBox20.ResumeLayout(false);
             this.groupBox19.ResumeLayout(false);
             this.groupBox19.PerformLayout();
@@ -1481,8 +1474,6 @@
             this.groupBox6.PerformLayout();
             this.groupBox5.ResumeLayout(false);
             this.groupBox5.PerformLayout();
-            this.groupBox24.ResumeLayout(false);
-            this.groupBox24.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1587,7 +1578,6 @@
         private System.Windows.Forms.GroupBox groupBox23;
         private System.Windows.Forms.GroupBox groupBox22;
         private System.Windows.Forms.GroupBox groupBox21;
-        private System.Windows.Forms.CheckBox checkBox12;
         private System.Windows.Forms.GroupBox groupBox20;
         private System.Windows.Forms.DateTimePicker dateTimePicker2;
         private System.Windows.Forms.GroupBox groupBox24;
@@ -1595,6 +1585,7 @@
         private System.Windows.Forms.RadioButton radioButton3;
         private System.Windows.Forms.DateTimePicker dateTimePicker4;
         private System.Windows.Forms.DateTimePicker dateTimePicker3;
+        private System.Windows.Forms.ComboBox comboBox2;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column15;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
@@ -1610,7 +1601,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Column10;
         private System.Windows.Forms.DataGridViewCheckBoxColumn Column11;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column13;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn Column16;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column17;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column18;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column19;
