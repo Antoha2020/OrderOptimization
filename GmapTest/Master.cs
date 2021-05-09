@@ -17,6 +17,8 @@ namespace GmapTest
         public double CurrentLat { get; set; }
         public double CurrentLon { get; set; }
 
+        public List<Order> myOrders = new List<Order>();
+
         public bool InWork { get; set; }
 
         public GMapRoute currentRoute = null;

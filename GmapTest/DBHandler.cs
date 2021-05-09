@@ -217,7 +217,7 @@ namespace GmapTest
             {
                 conn.Open();
                 SQLiteCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "SELECT * FROM orders";
+                cmd.CommandText = "SELECT * FROM orders where completed='False'";
                 SQLiteDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
@@ -261,10 +261,10 @@ namespace GmapTest
                 conn.Open();
                 SQLiteCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "INSERT INTO orders (name, description, lat, lon, city, street, house, flat, office," +
-                    "porch, intercom, floor, dateOrder, dateCreate, timeBeg, timeEnd, phone1, phone2, master) VALUES ('" +
+                    "porch, intercom, floor, dateOrder, dateCreate, timeBeg, timeEnd, phone1, phone2, master, completed) VALUES ('" +
                     name + "','" + description + "','" + lat + "', '" + lon + "','" + city + "','" + street +
                     "','" + house + "','" + flat + "','" + office + "','" + porch + "','" + intercom.ToString() + "','" + floor + "','" + dateOrder + 
-                    "','" + dateCreate + "','" + timeBeg + "','" + timeEnd + "','" + phone1 + "','" + phone2 + "','" + master + "')";
+                    "','" + dateCreate + "','" + timeBeg + "','" + timeEnd + "','" + phone1 + "','" + phone2 + "','" + master + "','False')";
                 cmd.ExecuteNonQuery();
                 conn.Close();
                 conn.Dispose();
@@ -280,15 +280,33 @@ namespace GmapTest
         /// Обновить данные о пользователе
         /// </summary>
 
-        public static void UpdateOrder(string name, string lat, string lon, bool inWork)
+        public static void UpdateOrder(string id, string name, string description, string lat, string lon, string city, string street, string house,
+           string flat, string office, string porch, bool intercom, string floor, string dateOrder, string timeBeg, string timeEnd,
+           string phone1, string phone2, string master, bool completed)
         {
             SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
             try
             {
                 conn.Open();
                 SQLiteCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "UPDATE masters SET startLat='" + lat + "', startLon='" + lon +
-                    "', inWork='" + inWork + "' WHERE name='" + name + "'";
+                cmd.CommandText = "UPDATE orders SET name='" + name + "', lat='" + lat + "', lon='" + lon +
+                    "', description='" + description +
+                    "', city='" + city +
+                    "', street='" + street +
+                    "', house='" + house +
+                    "', flat='" + flat +
+                    "', office='" + office +
+                    "', porch='" + porch +
+                    "', floor='" + floor +
+                    "', intercom='" + intercom.ToString() +
+                    "', dateOrder='" + dateOrder +
+                    "', timeBeg='" + timeBeg +
+                    "', timeEnd='" + timeEnd +
+                    "', phone1='" + phone1 +
+                    "', phone2='" + phone2 +
+                    "', master='" + master +
+                    "', completed='" + completed.ToString() +
+                    "' WHERE id='" + id + "'";
                 cmd.ExecuteNonQuery();
                 conn.Close();
                 conn.Dispose();
