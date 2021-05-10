@@ -26,6 +26,7 @@ namespace GmapTest
     {
         string DirName = "";
         GMapOverlay markersOverlay = new GMapOverlay("marker");
+        GMapOverlay routesOverlay = new GMapOverlay("marker");
         GMapOverlay markersOverlayStartFin = new GMapOverlay("marker");
         bool StartFinish = false;
         double FirstLat = 0, FirstLng = 0;
@@ -262,7 +263,13 @@ namespace GmapTest
             {
                 GMarkerGoogle marker = new GMarkerGoogle(new PointLatLng(Convert.ToDouble(order.Lat), Convert.ToDouble(order.Lon)), orderMarker[0]);
                 marker.ToolTip = new GMapRoundedToolTip(marker);
-                marker.ToolTipText = order.Name;
+                marker.ToolTip.Fill = Brushes.White;
+                marker.ToolTip.Foreground = Brushes.Black;
+                marker.ToolTip.Stroke = Pens.Black;
+                marker.ToolTip.TextPadding = new Size(20, 20);
+                marker.ToolTip.Font = new Font("Arial", 12);
+                marker.ToolTipText = " \n" + order.Name;
+                marker.ToolTipMode = MarkerTooltipMode.Always;
                 markersOverlay.Markers.Add(marker);
             }
             
@@ -271,8 +278,15 @@ namespace GmapTest
             {
                 double[] currCoord = GetCurrentCoord(master, dateTimePicker1.Value);
                 GMarkerGoogle markerMaster = new GMarkerGoogle(new PointLatLng(currCoord[0], currCoord[1]), col[k]);
-                markerMaster.ToolTip = new GMapBaloonToolTip(markerMaster);
-                markerMaster.ToolTipText = Constants.MASTERS[k++].Name;
+                markerMaster.ToolTip = new GMap.NET.WindowsForms.ToolTips.GMapRoundedToolTip(markerMaster);
+                markerMaster.ToolTip.Fill = Brushes.White;
+                markerMaster.ToolTip.Foreground = Brushes.Black;
+                markerMaster.ToolTip.Stroke = Pens.Black;
+                markerMaster.ToolTip.TextPadding = new Size(20, 20);
+                markerMaster.ToolTip.Font = new Font("Arial", 12);
+                //markerMaster.ToolTip.Offset = GMapRoundedToolTip.DefaultForeground;
+                markerMaster.ToolTipMode = MarkerTooltipMode.Always;
+                markerMaster.ToolTipText = " \n"+Constants.MASTERS[k++].Name;
                 markersOverlay.Markers.Add(markerMaster);
             }
             if (order != null)
@@ -333,6 +347,7 @@ namespace GmapTest
 
         private void button6_Click(object sender, EventArgs e)
         {
+
             for (int j = 0; j < Constants.MASTERS.Count; j++)
             {
                 Order order = null;
@@ -341,37 +356,47 @@ namespace GmapTest
                     if (Constants.ORDERS[i].Name.Equals(comboBox1.Text))
                         order = Constants.ORDERS[i];
                 }
-
-                double res = GetDistRouteOSM(order, Constants.MASTERS[j]);
+                double res = 0;
+                if (radioButton3.Checked)
+                {
+                    res = GetDistRouteOSM(order, Constants.MASTERS[j]);
+                }
+                else
+                {
+                    double[] currCoord = GetCurrentCoord(Constants.MASTERS[j], dateTimePicker1.Value);
+                    res = Math.Round(Constants.getDistance(Convert.ToDouble(order.Lat), Convert.ToDouble(order.Lon),
+                        currCoord[0], currCoord[1]) / 1000, 3);
+                    List<PointLatLng> list = new List<PointLatLng>();
+                    list.Add(new PointLatLng(Convert.ToDouble(order.Lat), Convert.ToDouble(order.Lon)));
+                    list.Add(new PointLatLng(currCoord[0], currCoord[1]));
+                    Constants.MASTERS[j].SetGMapRoute(list, res);
+                }
                 if (j == 0)
-                { button7.Text = Constants.MASTERS[j].Name + "  " + res; }
+                { button7.Text = Constants.MASTERS[j].Name + ";" + res; }
                 if (j == 1)
-                { button8.Text = Constants.MASTERS[j].Name + "  " + res; }
+                { button8.Text = Constants.MASTERS[j].Name + ";" + res; }
                 if (j == 2)
-                { button9.Text = Constants.MASTERS[j].Name + "  " + res; }
+                { button9.Text = Constants.MASTERS[j].Name + ";" + res; }
                 if (j == 3)
-                { button10.Text = Constants.MASTERS[j].Name + "  " + res; }
+                { button10.Text = Constants.MASTERS[j].Name + ";" + res; }
                 if (j == 4)
-                { button12.Text = Constants.MASTERS[j].Name + "  " + res; }
+                { button11.Text = Constants.MASTERS[j].Name + ";" + res; }
                 if (j == 5)
-                { button11.Text = Constants.MASTERS[j].Name + "  " + res; }
-
+                { button12.Text = Constants.MASTERS[j].Name + ";" + res; }
+                if (j == 6)
+                { button13.Text = Constants.MASTERS[j].Name + ";" + res; }
+                if (j == 7)
+                { button14.Text = Constants.MASTERS[j].Name + ";" + res; }
+                if (j == 8)
+                { button15.Text = Constants.MASTERS[j].Name + ";" + res; }
+                if (j == 9)
+                { button16.Text = Constants.MASTERS[j].Name + ";" + res; }
             }
+
+
         }
 
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
-            markersOverlay.Routes.Add(Constants.MASTERS[0].currentRoute);
-            gMapControl1.Overlays.Add(markersOverlay);
-            gMapControl1.Refresh();
-        }
-
-
-
-
-
-
-
+        
         private void gMapControl1_MouseClick(object sender, MouseEventArgs e)
         {
 
@@ -381,134 +406,7 @@ namespace GmapTest
                 textBox14.Text = gMapControl1.FromLocalToLatLng(e.X, e.Y).Lng.ToString();
                  
             }
-            //определение расстояния по прямой
-
-            List<double> xp = new List<double>();
-            List<double> yp = new List<double>();
-
-            if (toolStripButton6.Checked)
-            {
-                GMarkerGoogle marker;
-                double Lat = gMapControl1.FromLocalToLatLng(e.X, e.Y).Lat;
-                double Lng = gMapControl1.FromLocalToLatLng(e.X, e.Y).Lng;
-                if (e.Button == MouseButtons.Right)
-                {
-
-                    if (!StartFinish)
-                    {
-                        FirstLat = Lat;
-                        FirstLng = Lng;
-                        marker = new GMarkerGoogle(new PointLatLng(FirstLat, FirstLng), GMarkerGoogleType.blue_pushpin);
-
-                        marker.ToolTip = new GMapRoundedToolTip(marker);
-                        marker.ToolTipText = "Точка " + CountPts.ToString() + ":\n" + Math.Round(FirstLat, 5).ToString() +
-                            "  " + Math.Round(FirstLng, 5).ToString() + "\nРасстояние: " + SumDist.ToString() + " км";
-                        markersOverlayStartFin.Markers.Add(marker);
-                        TwoPointDist.Add(new PointLatLng(FirstLat, FirstLng));
-                        StartFinish = true;
-                    }
-                    else
-                    {
-                        marker = new GMarkerGoogle(new PointLatLng(Lat, Lng), GMarkerGoogleType.pink_pushpin);
-                        marker.ToolTip = new GMapRoundedToolTip(marker);
-
-                        SumDist += Math.Round(Constants.getDistance(FirstLat, FirstLng, Lat, Lng) / 1000, 3);
-                        marker.ToolTipText = "Точка " + (++CountPts).ToString() + ":\n" + Math.Round(Lat, 5).ToString() +
-                            "  " + Math.Round(Lng, 5).ToString() + "\nРасстояние: " + SumDist.ToString() + " км";
-
-                        markersOverlayStartFin.Markers.Add(marker);
-
-                        TwoPointDist.Add(new PointLatLng(Lat, Lng));
-                        GMapRoute r = new GMapRoute(TwoPointDist, "Route");
-                        r.IsVisible = true;
-                        r.Stroke = new Pen(Color.Blue, 2);
-                        markersOverlayStartFin.Routes.Add(r);
-
-                        FirstLat = Lat;
-                        FirstLng = Lng;
-                    }
-                }
-                if (e.Button == MouseButtons.Left && (Control.ModifierKeys & Keys.Shift) == Keys.Shift && StartFinish)
-                {
-                    marker = new GMarkerGoogle(new PointLatLng(Lat, Lng), GMarkerGoogleType.blue_pushpin);
-                    marker.ToolTip = new GMapRoundedToolTip(marker);
-
-                    SumDist += Math.Round(Constants.getDistance(FirstLat, FirstLng, Lat, Lng) / 1000, 3);
-                    marker.ToolTipText = "Точка " + (++CountPts).ToString() + ":\n" + Math.Round(Lat, 5).ToString() +
-                        "  " + Math.Round(Lng, 5).ToString() + "\nРасстояние: " + SumDist.ToString() + " км";
-
-                    markersOverlayStartFin.Markers.Add(marker);
-
-                    TwoPointDist.Add(new PointLatLng(Lat, Lng));
-                    GMapRoute r = new GMapRoute(TwoPointDist, "Route");
-                    r.IsVisible = true;
-                    r.Stroke = new Pen(Color.Blue, 2);
-                    markersOverlayStartFin.Routes.Add(r);
-                    SumDist = 0;
-
-                    StartFinish = false;
-                    TwoPointDist.Clear();
-                    CountPts = 1;
-                }
-
-                gMapControl1.Overlays.Add(markersOverlayStartFin);
-                gMapControl1.Zoom += 0.1;
-                gMapControl1.Zoom -= 0.1;
-            }
-            else
-            {
-
-                if (e.Button == MouseButtons.Right && (Control.ModifierKeys & Keys.Alt) == Keys.Alt)
-                {
-                    if (ChangeSector.Count > 0)
-                    {
-                        for (int i = polyOverlayChange.Polygons.Count - 1; i >= 0; i--)
-                            polyOverlayChange.Polygons.RemoveAt(i);
-                        for (int i = polyOverlayBordersPolyChange.Polygons.Count - 1; i >= 0; i--)
-                            polyOverlayBordersPolyChange.Polygons.RemoveAt(i);
-                        for (int i = ChangeSector.Count - 1; i >= 0; i--)
-                            ChangeSector.RemoveAt(i);
-                    }
-                    pointsHalfWeek.Add(new PointLatLng(gMapControl1.FromLocalToLatLng(e.X, e.Y).Lat, gMapControl1.FromLocalToLatLng(e.X, e.Y).Lng));
-                    if (pointsHalfWeek.Count > 1)
-                    {
-                        List<PointLatLng> TwoPoints = new List<PointLatLng>();
-                        TwoPoints.Add(pointsHalfWeek[pointsHalfWeek.Count - 2]);
-                        TwoPoints.Add(pointsHalfWeek[pointsHalfWeek.Count - 1]);
-
-                        GMapPolygon polygon1 = new GMapPolygon(TwoPoints, "mypolygon");
-                        polygon1.Fill = new SolidBrush(Color.FromArgb(50, 105, 105, 105));
-                        polygon1.Stroke = new Pen(Color.FromArgb(105, 105, 105), 1);
-                        polyOverlayBordersPolyChange.Polygons.Add(polygon1);
-                        gMapControl1.Overlays.Add(polyOverlayBordersPolyChange);
-
-                    }
-                }
-
-                if (e.Button == MouseButtons.Right && (Control.ModifierKeys & Keys.Control) == Keys.Control)
-                {
-                    polygonHalfWeek = new GMapPolygon(pointsHalfWeek, "mypolygon");
-                    //GMapOverlay polyOverlayChange = new GMapOverlay("polygons");
-                    polygonHalfWeek.Fill = new SolidBrush(Color.FromArgb(10, 0, 255, 0));
-                    polygonHalfWeek.Stroke = new Pen(Color.FromArgb(255, 0, 255, 0), 2);
-                    polyOverlayChange.Polygons.Add(polygonHalfWeek);
-                    gMapControl1.Overlays.Add(polyOverlayChange);
-
-                    for (int i = 0; i < pointsHalfWeek.Count; i++)
-                    {
-                        xp.Add(pointsHalfWeek[i].Lat);
-                        yp.Add(pointsHalfWeek[i].Lng);
-                    }
-                   // InsidePolygonChangeSector(xp, yp);
-                    NewChangeSector();
-
-                    label11.Text = CountInDisrt.ToString();
-                    CountInDisrt = 0;
-                    for (int i = pointsHalfWeek.Count - 1; i >= 0; i--)
-                        pointsHalfWeek.RemoveAt(i);
-
-                }
-            }
+            
         }
 
         private void toolStripButton3_Click(object sender, EventArgs e)
@@ -677,23 +575,7 @@ namespace GmapTest
                 RefreshTable();
             }
         }
-
-       
-
-        private void checkBox2_CheckedChanged(object sender, EventArgs e)
-        {
-            markersOverlay.Routes.Add(Constants.MASTERS[1].currentRoute);
-            gMapControl1.Overlays.Add(markersOverlay);
-            gMapControl1.Refresh();
-        }
-
-        private void checkBox3_CheckedChanged(object sender, EventArgs e)
-        {
-            markersOverlay.Routes.Add(Constants.MASTERS[2].currentRoute);
-            gMapControl1.Overlays.Add(markersOverlay);
-            gMapControl1.Refresh();
-        }
-
+               
         private void button20_Click(object sender, EventArgs e)
         {
             if (textBox12.Text != "")
@@ -877,81 +759,92 @@ namespace GmapTest
                     FillDataGridMyOrder(master);
                 }
             }
-        }        
-
-        private void NewChangeSector()
-        {
-            //ChangeSector.Reverse();
-            //for (int i = 0; i < ChangeSector.Count; i++)
-            //    for (int j = i + 1; j < ChangeSector.Count; j++)
-            //    {
-            //        if (ChangeSector[i].CodeTradePoint == ChangeSector[j].CodeTradePoint)
-            //        {
-            //            ChangeSector.RemoveAt(j);
-            //            j--;
-            //        }
-            //    }
         }
 
-        //public void InsidePolygonChangeSector(List<double> xp, List<double> yp)
-        //{
-        //    try
-        //    {
-        //        foreach (Point TrPoint in TradePoints)
-        //        {
-        //            int intersections_num = 0;
-        //            int prev = xp.Count - 1;
-        //            bool prev_under = yp[prev] < TrPoint.Y;
+        private void button3_Click(object sender, EventArgs e)
+        {
 
-        //            for (int i = 0; i < xp.Count; ++i)
-        //            {
-        //                bool cur_under = yp[i] < TrPoint.Y;
+        }
 
-        //                double ax = xp[prev] - TrPoint.X;
-        //                double ay = yp[prev] - TrPoint.Y;
+        private void toolStripButton6_Click(object sender, EventArgs e)
+        {
 
-        //                double bx = xp[i] - TrPoint.X;
-        //                double by = yp[i] - TrPoint.Y;
+        }
 
-        //                double t = (ax * (by - ay) - ay * (bx - ax));
-        //                if (cur_under && !prev_under)
-        //                {
-        //                    if (t > 0)
-        //                        intersections_num += 1;
-        //                }
-        //                if (!cur_under && prev_under)
-        //                {
-        //                    if (t < 0)
-        //                        intersections_num += 1;
-        //                }
+        private void button25_Click(object sender, EventArgs e)
+        {
 
-        //                prev = i;
-        //                prev_under = cur_under;
-        //            }
+        }
 
-        //            if (intersections_num % 2 == 1)
-        //            {
-        //                bool IsDouble = false;
-        //                for (int i = 0; i < ChangeSector.Count; i++)
-        //                {
-        //                    if (ChangeSector[i].CodeTradePoint == TrPoint.CodeTradePoint)
-        //                    {
-        //                        IsDouble = true;
-        //                        break;
-        //                    }
-        //                }
-        //                if (!IsDouble)
-        //                    CountInDisrt++;
+        private void toolStripButton5_Click(object sender, EventArgs e)
+        {
+            //for (int i = gMapControl1.Overlays.Count - 1; i >= 0; i--)
+            //    gMapControl1.Overlays[i].Clear();
+            markersOverlay.Routes.Clear();
+            foreach(CheckBox ch in masterCheckBoxes)
+            {
+                ch.Checked = false;
+            }
 
-        //                ChangeSector.Add(TrPoint);//содержит точки из выделенной области
-        //            }
-        //        }
-        //    }
-        //    catch
-        //    {
-        //        return;
-        //    }
-        //}
+            for(int i=0;i<Constants.MASTERS.Count;i++)
+            {
+                masterButtons[i].Text = Constants.MASTERS[i].Name;
+            }
+            ShowMarkers();
+            gMapControl1.Refresh();
+
+            
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox1.Checked && Constants.MASTERS[0].currentRoute != null)
+            {
+                markersOverlay.Routes.Add(Constants.MASTERS[0].currentRoute);
+                gMapControl1.Overlays.Add(markersOverlay);
+                gMapControl1.Refresh();
+            }
+        }
+
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox2.Checked && Constants.MASTERS[1].currentRoute != null)
+            {
+                markersOverlay.Routes.Add(Constants.MASTERS[1].currentRoute);
+                gMapControl1.Overlays.Add(markersOverlay);
+                gMapControl1.Refresh();
+            }
+        }
+
+        private void checkBox4_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox4.Checked && Constants.MASTERS[3].currentRoute != null)
+            {
+                markersOverlay.Routes.Add(Constants.MASTERS[3].currentRoute);
+                gMapControl1.Overlays.Add(markersOverlay);
+                gMapControl1.Refresh();
+            }
+        }
+
+        private void checkBox5_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox5.Checked && Constants.MASTERS[4].currentRoute != null)
+            {
+                markersOverlay.Routes.Add(Constants.MASTERS[4].currentRoute);
+                gMapControl1.Overlays.Add(markersOverlay);
+                gMapControl1.Refresh();
+            }
+        }
+
+        private void checkBox3_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox3.Checked && Constants.MASTERS[2].currentRoute != null)
+            {
+                markersOverlay.Routes.Add(Constants.MASTERS[2].currentRoute);
+                gMapControl1.Overlays.Add(markersOverlay);
+                gMapControl1.Refresh();
+            }
+        }
 
     }
 }
