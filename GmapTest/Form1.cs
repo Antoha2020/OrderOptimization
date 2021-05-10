@@ -63,19 +63,7 @@ namespace GmapTest
             gMapControl1.MapProvider = GMap.NET.MapProviders.GoogleSatelliteMapProvider.Instance;
             GMaps.Instance.Mode = AccessMode.ServerOnly;
             Logger.Log.Info("Main form start");
-            //listRoutes = DBHandler.GetListRoutes();//получение всех маршрутов, которые есть в системе
-            //SetComboBox();
-            //Constants.MASTERS.Add(new Master("Master1", 54.9244764079647, 37.40639153106871));
-            //Constants.MASTERS.Add(new Master("Master2", 56.32703566243706, 38.13250808457901,true));
-            //Constants.MASTERS.Add(new Master("Master3", 56.038196635851385, 35.95467164156729));
-            //Constants.MASTERS.Add(new Master("Master4", 55.754612213242595, 37.70177576322457));
-            //Constants.MASTERS.Add(new Master("Master5", 55.887615230803846, 37.51453353697321));
-            //Constants.MASTERS.Add(new Master("Master6", 55.80616204541146, 37.93649273958267));
-
-            //Constants.ORDERS.Add(new Order("Заказ1", "55.71421256993413", "37.67865790699016"));
-            //Constants.ORDERS.Add(new Order("Заказ2", "55.50371364250953", "36.042567403537504"));
-            //Constants.ORDERS.Add(new Order("Заказ3", "55.809221701400816", "38.989111949671305"));
-
+            
             masterButtons[0] = button7;
             masterButtons[1] = button8;
             masterButtons[2] = button9;
@@ -111,14 +99,20 @@ namespace GmapTest
             DBHandler.GetOrders();
             FillCombo1();
             FillMasters();
-            ShowMarkers();
             GetMyOrders();
+            ShowMarkers();
+            
             Logger.Log.Info("Form1 загружена");
         }
 
         private void GetMyOrders()
         {
-            for(int i=0;i<Constants.ORDERS.Count;i++)
+            for (int j = 0; j < Constants.MASTERS.Count; j++)
+            {
+                Constants.MASTERS[j].myOrders.Clear();                
+            }
+
+            for (int i=0;i<Constants.ORDERS.Count;i++)
             {
                 for(int j=0;j<Constants.MASTERS.Count;j++)
                 {
@@ -230,6 +224,26 @@ namespace GmapTest
             }
         }
 
+        private double [] GetCurrentCoord(Master master, DateTime date)
+        {
+            double[] result = new double[2] { master.StartLat, master.StartLon };
+            DateTime begin = new DateTime(2000, 1, 1, 0, 0, 0);
+            DateTime end = new DateTime(2000, 1, 1, 0, 0, 0);
+            foreach (Order order in master.myOrders)
+            {
+                if (order.DateOrder.ToShortDateString().Equals(date.ToShortDateString()))
+                {
+                    DateTime dt = Convert.ToDateTime(order.TimeEnd);
+                    if (end.Hour * 60 + end.Minute <= dt.Hour * 60 + dt.Minute)
+                    {
+                        result[0] = Convert.ToDouble(order.Lat);
+                        result[1] = Convert.ToDouble(order.Lon);
+                        end = dt;
+                    }
+                }
+            }
+            return result;
+        }
         private void ShowMarkers()
         {
             for (int r = markersOverlay.Markers.Count - 1; r >= 0; r--)
@@ -255,7 +269,8 @@ namespace GmapTest
             int k = 0;
             foreach (Master master in Constants.MASTERS)
             {
-                GMarkerGoogle markerMaster = new GMarkerGoogle(new PointLatLng(master.StartLat, master.StartLon), col[k]);
+                double[] currCoord = GetCurrentCoord(master, dateTimePicker1.Value);
+                GMarkerGoogle markerMaster = new GMarkerGoogle(new PointLatLng(currCoord[0], currCoord[1]), col[k]);
                 markerMaster.ToolTip = new GMapBaloonToolTip(markerMaster);
                 markerMaster.ToolTipText = Constants.MASTERS[k++].Name;
                 markersOverlay.Markers.Add(markerMaster);
@@ -636,6 +651,9 @@ namespace GmapTest
                 DBHandler.UpdateOrder(id, name, description, lat, lon, city, street, house, flat, office, porch, intercom, floor, dateOrder,
                     timeBeg, timeEnd, phone1, phone2, master, completed);
                 RefreshTable();
+                GetMyOrders();
+                ShowMarkers();
+                FillCombo1();
                 if (completed)
                     MessageBox.Show("Заказ " + name + " выполнен!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 else
@@ -683,8 +701,12 @@ namespace GmapTest
                 if (MessageBox.Show("Вы действительно хотите удалить заказ " + textBox15.Text + "?", "", MessageBoxButtons.YesNoCancel) == DialogResult.Yes)
                 {
                     DBHandler.DeleteOrder(textBox12.Text);
-                    MessageBox.Show("Заказ " + textBox15.Text + " успешно удален!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     RefreshTable();
+                    GetMyOrders();
+                    ShowMarkers();
+                    FillCombo1();
+                    MessageBox.Show("Заказ " + textBox15.Text + " успешно удален!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    
                     textBox1.Clear();
                     textBox2.Clear();
                     textBox3.Clear();
@@ -746,6 +768,7 @@ namespace GmapTest
                 if(str[0].Equals(master.Name))
                 {
                     label1.Text = master.Name;
+                    dateTimePicker5.Value = dateTimePicker1.Value;
                     FillDataGridMyOrder(master);
                     break;
                 }
@@ -755,6 +778,7 @@ namespace GmapTest
 
         private void FillDataGridMyOrder(Master master)
         {
+            dataGridView2.Rows.Clear();
             int count = 0;
             foreach(Order order in master.myOrders)
             {
@@ -815,7 +839,7 @@ namespace GmapTest
         {
             foreach (Master master in Constants.MASTERS)
             {
-                if (label1.Equals(master.Name))
+                if (label1.Text.Equals(master.Name))
                 {
                     FillDataGridMyOrder(master);
                     break;
@@ -825,11 +849,35 @@ namespace GmapTest
 
         private void button22_Click(object sender, EventArgs e)
         {
+            Master master=null;
+            foreach(Master mast in Constants.MASTERS)
+            {
+                if (mast.Name.Equals(label1.Text))
+                    master = mast;
+            }
             foreach(Order order in Constants.ORDERS)
             {
-
+                if(order.Name.Equals(textBox16.Text) && master!=null)
+                {
+                    foreach(Order ord in master.myOrders)
+                    {
+                        if(ord.Id==order.Id)
+                        {
+                            MessageBox.Show("Этот заказ уже назначен данному мастеру!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+                    }
+                    order.DateOrder = dateTimePicker5.Value;
+                    order.TimeBeg = dateTimePicker6.Value.ToShortTimeString();
+                    order.TimeEnd = dateTimePicker7.Value.ToShortTimeString();
+                    order.Master = master.Name;
+                    DBHandler.SetMasterOrder(order);
+                    master.myOrders.Add(order);
+                    FillCombo1();
+                    FillDataGridMyOrder(master);
+                }
             }
-        }
+        }        
 
         private void NewChangeSector()
         {
