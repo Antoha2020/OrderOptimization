@@ -115,13 +115,14 @@ namespace GmapTest
             SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
             try
             {
+                int k = 0;
                 conn.Open();
                 SQLiteCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "SELECT * FROM masters";
                 SQLiteDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    Master master = new Master(reader["name"].ToString(),
+                    Master master = new Master(k++, reader["name"].ToString(),
                         Convert.ToDouble(reader["startLat"].ToString().Replace('.', ',')),
                         Convert.ToDouble(reader["startLon"].ToString().Replace('.', ',')),
                         //Convert.ToDouble(reader["currentLat"].ToString().Replace('.', ',')),
