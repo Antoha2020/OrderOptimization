@@ -37,8 +37,8 @@ namespace GmapTest
         GMapOverlay polyOverlayChange = new GMapOverlay("polygons");
        List<Point> ChangeSector = new List<Point>();
         
-        RouterDb routerDb = new RouterDb();
-        Router router;
+        public RouterDb routerDb = new RouterDb();
+        public Router router;
         GMarkerGoogleType[] col = { GMarkerGoogleType.green_dot, GMarkerGoogleType.yellow_dot,
                                   GMarkerGoogleType.red_dot,GMarkerGoogleType.blue_dot,
                                   GMarkerGoogleType.orange_dot,GMarkerGoogleType.lightblue_dot,
@@ -84,6 +84,7 @@ namespace GmapTest
             FillMasters();
             GetMyOrders();
             ShowMarkers();
+            ShowRoutes();
             
             Logger.Log.Info("Form1 загружена");
         }
@@ -308,7 +309,7 @@ namespace GmapTest
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             ShowMarkers();
-            toolStripButton5_Click(sender, e);
+            //toolStripButton5_Click(sender, e);
         }
 
         private void gMapControl1_OnMapZoomChanged()
@@ -316,45 +317,45 @@ namespace GmapTest
             trackBar1.Value = (int)gMapControl1.Zoom;
         }
 
-        private double GetDistRouteOSM(Order order, Master master)//расчет расстояния из OSM файла
-        {
-            List<PointLatLng> list = new List<PointLatLng>();
-            double dist = 0;
-            try
-            {
-                double[] currCoord = GetCurrentCoord(master, dateTimePicker1.Value);
-                var profile = Vehicle.Car.Fastest();
+        //private double GetDistRouteOSM(Order order, Master master)//расчет расстояния из OSM файла
+        //{
+        //    List<PointLatLng> list = new List<PointLatLng>();
+        //    double dist = 0;
+        //    try
+        //    {
+        //        double[] currCoord = GetCurrentCoord(master, dateTimePicker1.Value);
+        //        var profile = Vehicle.Car.Fastest();
 
-                var route = router.Calculate(profile, (float)Convert.ToDouble(order.Lat), (float)Convert.ToDouble(order.Lon),
-                    (float)currCoord[0], (float)currCoord[1]);
-                var routeGeoJson = route.ToGeoJson();
+        //        var route = router.Calculate(profile, (float)Convert.ToDouble(order.Lat), (float)Convert.ToDouble(order.Lon),
+        //            (float)currCoord[0], (float)currCoord[1]);
+        //        var routeGeoJson = route.ToGeoJson();
 
-                JObject CoordinateSearch = JObject.Parse(routeGeoJson.ToString());
-                IList<JToken> results = CoordinateSearch["features"].Children().ToList();
-                IList<SearchResult> searchResults = new List<SearchResult>();
+        //        JObject CoordinateSearch = JObject.Parse(routeGeoJson.ToString());
+        //        IList<JToken> results = CoordinateSearch["features"].Children().ToList();
+        //        IList<SearchResult> searchResults = new List<SearchResult>();
 
-                SearchResult searchResult;
-                foreach (JToken result in results)
-                {
-                    if (!result.ToString().Contains("\"type\": \"Point\""))
-                    {
-                        searchResult = JsonConvert.DeserializeObject<SearchResult>(result.ToString());
-                        searchResults.Add(searchResult);
-                        for (int d = 0; d < searchResult.geometry.coordinates.Length / 2; d++)
-                            list.Add(new GMap.NET.PointLatLng(searchResult.geometry.coordinates[d, 1], searchResult.geometry.coordinates[d, 0]));
-                        dist = Math.Round(Convert.ToDouble(searchResult.properties.distance), 3);
-                    }
-                }
-                dist = Math.Round(dist / 1000, 3);
-                master.SetGMapRoute(list, dist, order.Id);
-            }
-            catch
-            {
-                return 0;
-            }
+        //        SearchResult searchResult;
+        //        foreach (JToken result in results)
+        //        {
+        //            if (!result.ToString().Contains("\"type\": \"Point\""))
+        //            {
+        //                searchResult = JsonConvert.DeserializeObject<SearchResult>(result.ToString());
+        //                searchResults.Add(searchResult);
+        //                for (int d = 0; d < searchResult.geometry.coordinates.Length / 2; d++)
+        //                    list.Add(new GMap.NET.PointLatLng(searchResult.geometry.coordinates[d, 1], searchResult.geometry.coordinates[d, 0]));
+        //                dist = Math.Round(Convert.ToDouble(searchResult.properties.distance), 3);
+        //            }
+        //        }
+        //        dist = Math.Round(dist / 1000, 3);
+        //        master.SetGMapRoute(list, dist, order.Id);
+        //    }
+        //    catch
+        //    {
+        //        return 0;
+        //    }
 
-            return dist;
-        }
+        //    return dist;
+        //}
 
         private void button6_Click(object sender, EventArgs e)
         {
@@ -441,6 +442,10 @@ namespace GmapTest
                     timeBeg, "", "", "", "Нет");
                 RefreshTable();
                 FillCombo1();
+                textBox11.Clear();
+                textBox18.Clear();
+                textBox19.Clear();
+                textBox20.Clear();
                 //MessageBox.Show("Заказ " + name + " успешно создан!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -681,6 +686,7 @@ namespace GmapTest
         {
             FillCombo1();
             toolStripButton5_Click(sender, e);
+            ShowRoutes();
         }
 
         private void button24_Click(object sender, EventArgs e)
@@ -690,15 +696,38 @@ namespace GmapTest
 
         private void button7_Click(object sender, EventArgs e)
         {
-            //OpenMyOrdersPanel(button7);
+            AppointOrder(Constants.MASTERS[0]);
+            ShowRoutes();
+        }
+
+        private void AppointOrder(Master master)
+        {
             Order order = null;
             for (int i = 0; i < Constants.ORDERS.Count; i++)
             {
                 if (Constants.ORDERS[i].Name.Equals(comboBox1.Text))
                     order = Constants.ORDERS[i];
             }
-            if(order!=null)
-            GetDistRouteOSM(order, Constants.MASTERS[0]);
+            if (order != null)
+            {
+                order.Master = master.Name;
+                DBHandler.SetMasterOrder(order);
+                master.myOrders.Add(order);
+                FillCombo1();
+            }
+        }
+
+        private void ShowRoutes()
+        {
+            Cursor.Current = Cursors.WaitCursor;
+            foreach (Master master in Constants.MASTERS)
+            {
+                master.GetDistRouteOSM1(router, dateTimePicker1.Value);
+                markersOverlay.Routes.Add(master.currentRoute);
+            }
+            gMapControl1.Overlays.Add(markersOverlay);
+            gMapControl1.Refresh();
+            Cursor.Current = Cursors.Default;
         }
 
         private void OpenMyOrdersPanel(Button btn)
@@ -736,47 +765,56 @@ namespace GmapTest
 
         private void button8_Click(object sender, EventArgs e)
         {
-            OpenMyOrdersPanel(button8);
+            AppointOrder(Constants.MASTERS[1]);
+            ShowRoutes();
         }
 
         private void button9_Click(object sender, EventArgs e)
         {
-            OpenMyOrdersPanel(button9);
+            AppointOrder(Constants.MASTERS[2]);
+            ShowRoutes();
         }
 
         private void button10_Click(object sender, EventArgs e)
         {
-            OpenMyOrdersPanel(button10);
+            AppointOrder(Constants.MASTERS[3]);
+            ShowRoutes();
         }
 
         private void button11_Click(object sender, EventArgs e)
         {
-            OpenMyOrdersPanel(button11);
+            AppointOrder(Constants.MASTERS[4]);
+            ShowRoutes();
         }
 
         private void button12_Click(object sender, EventArgs e)
         {
-            OpenMyOrdersPanel(button12);
+            AppointOrder(Constants.MASTERS[5]);
+            ShowRoutes();
         }
 
         private void button13_Click(object sender, EventArgs e)
         {
-            OpenMyOrdersPanel(button13);
+            AppointOrder(Constants.MASTERS[6]);
+            ShowRoutes();
         }
 
         private void button14_Click(object sender, EventArgs e)
         {
-            OpenMyOrdersPanel(button14);
+            AppointOrder(Constants.MASTERS[7]);
+            ShowRoutes();
         }
 
         private void button15_Click(object sender, EventArgs e)
         {
-            OpenMyOrdersPanel(button15);
+            AppointOrder(Constants.MASTERS[8]);
+            ShowRoutes();
         }
 
         private void button16_Click(object sender, EventArgs e)
         {
-            OpenMyOrdersPanel(button16);
+            AppointOrder(Constants.MASTERS[9]);
+            ShowRoutes();
         }
 
         private void dateTimePicker5_ValueChanged(object sender, EventArgs e)
@@ -857,113 +895,6 @@ namespace GmapTest
             gMapControl1.Refresh();
 
             
-        }
-
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
-            if (checkBox1.Checked && Constants.MASTERS[0].currentRoute != null)
-            {
-
-                markersOverlay.Routes.Add(Constants.MASTERS[0].currentRoute);
-                gMapControl1.Overlays.Add(markersOverlay);
-                gMapControl1.Refresh();
-            }
-        }
-
-        private void checkBox2_CheckedChanged(object sender, EventArgs e)
-        {
-            if (checkBox2.Checked && Constants.MASTERS[1].currentRoute != null)
-            {
-                markersOverlay.Routes.Add(Constants.MASTERS[1].currentRoute);
-                gMapControl1.Overlays.Add(markersOverlay);
-                gMapControl1.Refresh();
-            }
-        }
-
-        private void checkBox4_CheckedChanged(object sender, EventArgs e)
-        {
-            if (checkBox4.Checked && Constants.MASTERS[3].currentRoute != null)
-            {
-                markersOverlay.Routes.Add(Constants.MASTERS[3].currentRoute);
-                gMapControl1.Overlays.Add(markersOverlay);
-                gMapControl1.Refresh();
-            }
-        }
-
-        private void checkBox5_CheckedChanged(object sender, EventArgs e)
-        {
-            if (checkBox5.Checked && Constants.MASTERS[4].currentRoute != null)
-            {
-                markersOverlay.Routes.Add(Constants.MASTERS[4].currentRoute);
-                gMapControl1.Overlays.Add(markersOverlay);
-                gMapControl1.Refresh();
-            }
-        }
-
-        private void checkBox6_CheckedChanged(object sender, EventArgs e)
-        {
-            if (checkBox6.Checked && Constants.MASTERS[5].currentRoute != null)
-            {
-                markersOverlay.Routes.Add(Constants.MASTERS[5].currentRoute);
-                gMapControl1.Overlays.Add(markersOverlay);
-                gMapControl1.Refresh();
-            }
-        }
-
-        private void checkBox7_CheckedChanged(object sender, EventArgs e)
-        {
-            if (checkBox7.Checked && Constants.MASTERS[6].currentRoute != null)
-            {
-                markersOverlay.Routes.Add(Constants.MASTERS[6].currentRoute);
-                gMapControl1.Overlays.Add(markersOverlay);
-                gMapControl1.Refresh();
-            }
-        }
-
-        private void checkBox8_CheckedChanged(object sender, EventArgs e)
-        {
-            if (checkBox8.Checked && Constants.MASTERS[7].currentRoute != null)
-            {
-                markersOverlay.Routes.Add(Constants.MASTERS[7].currentRoute);
-                gMapControl1.Overlays.Add(markersOverlay);
-                gMapControl1.Refresh();
-            }
-        }
-
-        private void checkBox9_CheckedChanged(object sender, EventArgs e)
-        {
-            if (checkBox9.Checked && Constants.MASTERS[8].currentRoute != null)
-            {
-                markersOverlay.Routes.Add(Constants.MASTERS[8].currentRoute);
-                gMapControl1.Overlays.Add(markersOverlay);
-                gMapControl1.Refresh();
-            }
-        }
-
-        private void checkBox10_CheckedChanged(object sender, EventArgs e)
-        {
-            if (checkBox10.Checked && Constants.MASTERS[9].currentRoute != null)
-            {
-                markersOverlay.Routes.Add(Constants.MASTERS[9].currentRoute);
-                gMapControl1.Overlays.Add(markersOverlay);
-                gMapControl1.Refresh();
-            }
-        }
-
-        private void textBox19_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBox3_CheckedChanged(object sender, EventArgs e)
-        {
-            if (checkBox3.Checked && Constants.MASTERS[2].currentRoute != null)
-            {
-                markersOverlay.Routes.Add(Constants.MASTERS[2].currentRoute);
-                gMapControl1.Overlays.Add(markersOverlay);
-                gMapControl1.Refresh();
-            }
-        }
-
+        }        
     }
 }
