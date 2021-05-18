@@ -31,7 +31,7 @@ namespace GmapTest
 
         public Order(string id, string name, string lat, string lon, string dateCreate, string description, string city, string street, string house,
              string flat, string office, string porch, string floor,  bool intercom, string dateOrder, string timeBeg,
-             string timeEnd, string phone1, string phone2, string master)
+             string phone1, string phone2, string master)
         {
             Id = id;
             Name = name;
@@ -49,7 +49,6 @@ namespace GmapTest
             Intercom = intercom;            
             DateOrder = Convert.ToDateTime(dateOrder);
             TimeBeg = timeBeg;
-            TimeEnd = timeEnd;
             Phone1 = phone1;
             Phone2 = phone2;
             Master = master;

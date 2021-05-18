@@ -19,9 +19,7 @@ namespace GmapTest
         public string Name { get; set; }
         public double StartLat { get; set; }
         public double StartLon { get; set; }
-        public double CurrentLat { get; set; }
-        public double CurrentLon { get; set; }
-
+        
         public List<Order> myOrders = new List<Order>();
         public int currentIndex;
         public bool InWork { get; set; }
@@ -38,9 +36,7 @@ namespace GmapTest
             Id = id;
             this.Name = name;
             this.StartLat = startLat;
-            this.StartLon = startLon;
-            this.CurrentLat = startLat;
-            this.CurrentLon = startLon;
+            this.StartLon = startLon;            
             this.InWork = inWork;
         }
 
@@ -140,9 +136,9 @@ namespace GmapTest
             return dist;
         }
 
-        internal void GetDistRouteOSM(Router router, DateTime value)
-        {
-            throw new NotImplementedException();
-        }
+        //internal void GetDistRouteOSM(Router router, DateTime value)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }    
 }

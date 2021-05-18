@@ -10,31 +10,33 @@ using System.Threading.Tasks;
 
 namespace GmapTest
 {
-    class DBHandler
-    {                      
-        public const string CONNECTION_STRING = "Data Source=db/OrdersOptimization.db;Version=3;";
-               
+    class DBHandlerMySQL
+    {
+        public static MySqlConnection conn;
+        public static void DBConnection()
+        {
+            //string connString = "Server = server211.hosting.reg.ru ;Database = u1381592_default; port=3306 ;User Id= u1381592_default ;password = pGDcz75BZgkTJ4G3; charset=utf8;";
+            conn = new MySqlConnection(Constants.CONNECTION_STRING);            
+        }        
+                       
         public static void GetMasters()
         {
-            if (!File.Exists("db/OrdersOptimization.db"))
-                return;
-            Constants.MASTERS.Clear();
-            SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
+            DBConnection();
+            Constants.MASTERS.Clear();            
             try
             {
                 int k = 0;
                 conn.Open();
-                SQLiteCommand cmd = conn.CreateCommand();
+               MySqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "SELECT * FROM masters";
-                SQLiteDataReader reader = cmd.ExecuteReader();
+                MySqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
                     Master master = new Master(k++, reader["name"].ToString(),
                         Convert.ToDouble(reader["startLat"].ToString().Replace('.', ',')),
                         Convert.ToDouble(reader["startLon"].ToString().Replace('.', ',')),
                         Convert.ToBoolean(reader["inWork"].ToString()));
-                    if (master.InWork)
-                        Constants.MASTERS.Add(master);
+                    Constants.MASTERS.Add(master);
                 }
                 reader.Close();
                 conn.Close();
@@ -45,13 +47,13 @@ namespace GmapTest
 
         public static void AddMaster(string name, string lat, string lon, bool inWork)
         {
-            SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
+            DBConnection();
             try
             {
                 conn.Open();
-                SQLiteCommand cmd = conn.CreateCommand();
-                cmd.CommandText = "INSERT INTO masters (name, startLat, startLon, inWork) VALUES ('" +
-                    name + "','" + lat + "','" + lon + "','" + inWork + "')";
+                MySqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "INSERT INTO masters (name, startLat, startLon, currentLat, currentLon, inWork) VALUES ('" +
+                    name + "','" + lat + "','" + lon + "', '" + lat + "','" + lon + "','" + inWork + "')";
                 cmd.ExecuteNonQuery();
                 conn.Close();
                 conn.Dispose();
@@ -69,11 +71,11 @@ namespace GmapTest
         
         public static void UpdateMaster(string name, string lat, string lon, bool inWork)
         {
-            SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
+            DBConnection();
             try
             {
                 conn.Open();
-                SQLiteCommand cmd = conn.CreateCommand();
+                MySqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "UPDATE masters SET startLat='" + lat + "', startLon='" + lon +
                     "', inWork='" + inWork + "' WHERE name='" + name + "'";
                 cmd.ExecuteNonQuery();
@@ -94,12 +96,12 @@ namespace GmapTest
         /// <returns></returns>
         public static bool DeleteMaster(string name)
         {
-            bool res = true;
-            SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
+            DBConnection();
+            bool res = true;            
             try
             {
                 conn.Open();
-                SQLiteCommand cmd = conn.CreateCommand();
+                MySqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "DELETE FROM masters WHERE name='" + name + "'";
                 cmd.ExecuteNonQuery();
             }
@@ -114,20 +116,18 @@ namespace GmapTest
 
         public static void GetOrders()
         {
-            if (!File.Exists("db/OrdersOptimization.db"))
-                return;
+            DBConnection();
             Constants.ORDERS.Clear();
-            SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
             try
             {
                 DateTime now = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0);
                 DateTime future = new DateTime(2100, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0);
 
                 conn.Open();
-                SQLiteCommand cmd = conn.CreateCommand();
+                MySqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "SELECT * FROM orders where dateOrder between '" +
                          now.ToString("yyyy-MM-dd HH:mm:ss") + "' AND '" + future.ToString("yyyy-MM-dd HH:mm:ss") + "'";// completed='False'";
-                SQLiteDataReader reader = cmd.ExecuteReader();
+                MySqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
 
@@ -164,14 +164,13 @@ namespace GmapTest
            string flat, string office, string porch, bool intercom, string floor, DateTime dateOrder, string timeBeg, 
            string phone1, string phone2, string master)
         {
+            DBConnection();
             string dateCreate = DateTime.Now.ToShortDateString();
-            SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
-
             DateTime dt = new DateTime(dateOrder.Year, dateOrder.Month, dateOrder.Day, 2,0,0);
             try
             {
                 conn.Open();
-                SQLiteCommand cmd = conn.CreateCommand();
+                MySqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "INSERT INTO orders (name, description, lat, lon, city, street, house, flat, office," +
                     "porch, intercom, floor, dateOrder, dateCreate, timeBeg, phone1, phone2, master, completed) VALUES ('" +
                     name + "','" + description + "','" + lat + "', '" + lon + "','" + city + "','" + street +
@@ -196,11 +195,11 @@ namespace GmapTest
            string flat, string office, string porch, bool intercom, string floor, string dateOrder, string timeBeg, 
            string phone1, string phone2, string master, bool completed)
         {
-            SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
+            DBConnection();
             try
             {
                 conn.Open();
-                SQLiteCommand cmd = conn.CreateCommand();
+                MySqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "UPDATE orders SET name='" + name + 
                     "', description='" + description +
                     "', city='" + city +
@@ -231,11 +230,11 @@ namespace GmapTest
 
         public static void SetMasterOrder(Order order)
         {
-            SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
+            DBConnection();
             try
             {
                 conn.Open();
-                SQLiteCommand cmd = conn.CreateCommand();
+                MySqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "UPDATE orders SET master='" + order.Master +                    
                     "' WHERE id='" + order.Id + "'";
                 cmd.ExecuteNonQuery();
@@ -255,12 +254,12 @@ namespace GmapTest
         /// <returns></returns>
         public static bool DeleteOrder(string id)
         {
-            bool res = true;
-            SQLiteConnection conn = new SQLiteConnection(CONNECTION_STRING);
+            DBConnection();
+            bool res = true;            
             try
             {
                 conn.Open();
-                SQLiteCommand cmd = conn.CreateCommand();
+               MySqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "DELETE FROM orders WHERE id='" + id + "'";
                 cmd.ExecuteNonQuery();
             }

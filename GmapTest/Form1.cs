@@ -3,6 +3,11 @@ using GMap.NET.MapProviders;
 using GMap.NET.WindowsForms;
 using GMap.NET.WindowsForms.Markers;
 using GMap.NET.WindowsForms.ToolTips;
+using iText.Kernel.Font;
+using iText.Kernel.Pdf;
+using iText.Layout;
+using iText.Layout.Element;
+using iText.StyledXmlParser.Jsoup.Nodes;
 using Itinero;
 using Itinero.IO.Osm;
 using Itinero.LocalGeo;
@@ -12,6 +17,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -19,24 +25,13 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Windows.Forms;
+using Document = iText.Layout.Document;
 
 namespace GmapTest
 {
     public partial class Form1 : Form
     {
         GMapOverlay markersOverlay = new GMapOverlay("marker");
-        GMapOverlay routesOverlay = new GMapOverlay("marker");
-        GMapOverlay markersOverlayStartFin = new GMapOverlay("marker");
-        List<PointLatLng> TwoPointDist = new List<PointLatLng>();
-        
-        List<PointLatLng> pointsHalfWeek = new List<PointLatLng>();
-        //List<Elementary_route> List_ER = new List<Elementary_route>();
-        GMapOverlay polyOverlayRoute = new GMapOverlay("polygons");
-        GMapOverlay polyOverlayBordersPoly = new GMapOverlay("polygons");
-        GMapOverlay polyOverlayBordersPolyChange = new GMapOverlay("polygons");
-        GMapOverlay polyOverlayChange = new GMapOverlay("polygons");
-       List<Point> ChangeSector = new List<Point>();
-        
         public RouterDb routerDb = new RouterDb();
         public Router router;
         GMarkerGoogleType[] col = { GMarkerGoogleType.green_dot, GMarkerGoogleType.yellow_dot,
@@ -45,18 +40,24 @@ namespace GmapTest
                                   GMarkerGoogleType.pink_dot,GMarkerGoogleType.purple_dot,
                                   GMarkerGoogleType.green_dot, GMarkerGoogleType.yellow_dot
                                    };
-        GMarkerGoogleType[] orderMarker = { GMarkerGoogleType.green_pushpin, GMarkerGoogleType.red_pushpin, GMarkerGoogleType.yellow_pushpin};
+        GMarkerGoogleType[] orderMarker = { GMarkerGoogleType.green_pushpin, GMarkerGoogleType.red_pushpin, GMarkerGoogleType.yellow_pushpin };
         Button[] masterButtons = new Button[10];
         CheckBox[] masterCheckBoxes = new CheckBox[10];
+        Button[] routeList = new Button[10];
 
         public Form1()
         {
             InitializeComponent();
-            DBHandler.GetMasters();
+            if(!Constants.ReadConfig())
+            {
+                MessageBox.Show("Ошибка чтения конфигурационного файла!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Process.GetCurrentProcess().Kill(); //Application.Exit();
+            }
+            DBHandlerMySQL.GetMasters();
             gMapControl1.MapProvider = GMap.NET.MapProviders.GoogleSatelliteMapProvider.Instance;
             GMaps.Instance.Mode = AccessMode.ServerOnly;
             Logger.Log.Info("Main form start");
-            
+
             masterButtons[0] = button7;
             masterButtons[1] = button8;
             masterButtons[2] = button9;
@@ -67,7 +68,17 @@ namespace GmapTest
             masterButtons[7] = button14;
             masterButtons[8] = button15;
             masterButtons[9] = button16;
-            
+
+            routeList[0] = button4;
+            routeList[1] = button5;
+            routeList[2] = button22;
+            routeList[3] = button23;
+            routeList[4] = button24;
+            routeList[5] = button25;
+            routeList[6] = button26;
+            routeList[7] = button27;
+            routeList[8] = button28;
+            routeList[9] = button29;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -79,113 +90,16 @@ namespace GmapTest
             gMapControl1.ShowCenter = false;
             gMapControl1.DragButton = MouseButtons.Left;
 
-            DBHandler.GetOrders();
+            DBHandlerMySQL.GetOrders();
             FillCombo1();
             FillMasters();
             GetMyOrders();
             ShowMarkers();
             ShowRoutes();
-            
+
             Logger.Log.Info("Form1 загружена");
         }
 
-        private void GetMyOrders()
-        {
-            for (int j = 0; j < Constants.MASTERS.Count; j++)
-            {
-                Constants.MASTERS[j].myOrders.Clear();                
-            }
-
-            for (int i=0;i<Constants.ORDERS.Count;i++)
-            {
-                for(int j=0;j<Constants.MASTERS.Count;j++)
-                {
-                    if(Constants.ORDERS[i].Master.Equals(Constants.MASTERS[j].Name))
-                    {
-                        Constants.MASTERS[j].myOrders.Add(Constants.ORDERS[i]);
-                    }
-                }
-            }
-        }
-
-        private void FillCombo1()
-        {
-            comboBox1.Items.Clear();
-            foreach (Order ord in Constants.ORDERS)
-            {
-                if (ord.Master.Equals("Нет") && ord.DateOrder.ToShortDateString().Equals(dateTimePicker1.Value.ToShortDateString()))
-                    comboBox1.Items.Add(ord.Name);
-            }
-            if (comboBox1.Items.Count > 0)
-                comboBox1.SelectedIndex = 0;
-            else
-            {
-                comboBox1.Text = "";
-                ShowMarkers();
-            }
-        }
-
-        private void FillMasters()
-        {
-            for (int i = 0; i < masterButtons.Length; i++)
-            {
-                masterButtons[i].Visible = false;
-            }
-            panel1.Height = 300;
-            groupBox1.Height = 20;
-            comboBox2.Items.Add("Нет");
-            for (int i=0;i<Constants.MASTERS.Count;i++)
-            {
-                masterButtons[i].Visible = true;
-                masterButtons[i].Text = Constants.MASTERS[i].Name;
-                //masterCheckBoxes[i].Visible = true;
-                panel1.Height += 30;
-                groupBox1.Height += 30;
-
-                comboBox2.Items.Add(Constants.MASTERS[i].Name);
-            }
-            comboBox2.SelectedIndex = 0;
-        }
-
-        private void googleMapsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Logger.Log.Info("Выбрано Google карту");
-            gMapControl1.MapProvider = GMap.NET.MapProviders.GoogleMapProvider.Instance;
-            gMapControl1.Refresh();
-        }
-
-        private void спутниковаяToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Logger.Log.Info("Выбрано спутниковую Google карту");
-            gMapControl1.MapProvider = GoogleSatelliteMapProvider.Instance;
-            gMapControl1.Refresh();
-        }
-
-        private void openStreetMapToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Logger.Log.Info("Выбрано OSM карту");
-            gMapControl1.MapProvider = GMap.NET.MapProviders.OpenStreetMapProvider.Instance;
-            gMapControl1.Refresh();
-        }
-
-        private void другаяToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            gMapControl1.MapProvider = GMap.NET.MapProviders.YandexMapProvider.Instance;
-            gMapControl1.Refresh();
-        }
-
-        private void trackBar1_Scroll(object sender, EventArgs e)
-        {
-            gMapControl1.Zoom = trackBar1.Value;
-        }
-       
-        private void toolStripButton2_Click(object sender, EventArgs e)
-        {
-            panel3.Visible = true;
-            panel4.Visible = false;
-        }
-
-        bool loadMap = false;
         /// <summary>
         /// Загрузка картографии
         /// </summary>
@@ -201,8 +115,8 @@ namespace GmapTest
                 //routerDb.AddContracted(Vehicle.Car.Fastest());
                 router = new Router(routerDb);
                 gMapControl1.Cursor = Cursors.Default;
-                button6.Enabled = true;
-                loadMap = true;
+                button1.Enabled = false;
+
             }
             catch
             {
@@ -210,27 +124,294 @@ namespace GmapTest
             }
         }
 
-        private double [] GetCurrentCoord(Master master, DateTime date)
+        /// <summary>
+        /// Изменение даты в основном окне
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void dateTimePicker1_ValueChanged(object sender, EventArgs e)
         {
-            double[] result = new double[2] { master.StartLat, master.StartLon };
-            DateTime begin = new DateTime(2000, 1, 1, 0, 0, 0);
-            DateTime end = new DateTime(2000, 1, 1, 0, 0, 0);
-            foreach (Order order in master.myOrders)
+            FillCombo1();
+            toolStripButton5_Click(sender, e);
+            ShowRoutes();
+            ShowMarkers();
+        }
+
+        /// <summary>
+        /// Поиск координат по адресу
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button2_Click(object sender, EventArgs e)
+        {
+            TestRequestAsync();
+        }
+
+        private async System.Threading.Tasks.Task TestRequestAsync()
+        {
+            this.Cursor = Cursors.WaitCursor;
+            WebRequest request = WebRequest.Create("http://search.maps.sputnik.ru/search?q=" + textBox17.Text);// Москва, Тверская улица 13");
+            WebResponse response = await request.GetResponseAsync();
+            using (Stream stream = response.GetResponseStream())
             {
-                if (order.DateOrder.ToShortDateString().Equals(date.ToShortDateString()))
+                using (StreamReader reader = new StreamReader(stream))
                 {
-                    DateTime dt = Convert.ToDateTime(order.TimeEnd);
-                    if (end.Hour * 60 + end.Minute <= dt.Hour * 60 + dt.Minute)
+                    //Console.WriteLine(reader.ReadToEnd());
+                    try
                     {
-                        result[0] = Convert.ToDouble(order.Lat);
-                        result[1] = Convert.ToDouble(order.Lon);
-                        end = dt;
-                        master.lastTimeEnd = dt.ToString("HH:mm");
+                        string s = reader.ReadToEnd();
+                        JObject CoordinateSearch = JObject.Parse(s.ToString());
+                        IList<JToken> results = CoordinateSearch["result"].Children().ToList();
+                        JObject CoordinateSearch1 = JObject.Parse(results[0].ToString());
+                        IList<JToken> results1 = CoordinateSearch1["position"].Children().ToList();
+
+                        for (int i = 0; i < 2; i++)
+                        {
+                            if (results1[i].ToString().Contains("lat"))
+                            {
+                                string[] str = results1[i].ToString().Split(new Char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                                textBox19.Text = str[1];
+                            }
+                            if (results1[i].ToString().Contains("lon"))
+                            {
+                                string[] str = results1[i].ToString().Split(new Char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                                textBox20.Text = str[1];
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        textBox19.Clear();
+                        textBox20.Clear();
+                        MessageBox.Show("Координаты не найдены!", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+
+                    this.Cursor = Cursors.Default;
+                }
+            }
+            response.Close();
+        }
+
+        /// <summary>
+        /// Показать маркер с найденными координатами на карте
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button3_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                //toolStripButton5_Click(sender, e);
+                double lat = Convert.ToDouble(textBox19.Text.Replace('.', ','));
+                double lon = Convert.ToDouble(textBox20.Text.Replace('.', ','));
+                GMarkerGoogle testMarker = new GMarkerGoogle(new PointLatLng(lat, lon), GMarkerGoogleType.green_big_go);
+                gMapControl1.Position = new PointLatLng(lat, lon);
+                markersOverlay.Markers.Add(testMarker);
+                //gMapControl1.Refresh();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Проверьте правильность ввода координат!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Добавить заказ в систему
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void button6_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string name = textBox11.Text;
+                string lat = textBox19.Text;
+                string lon = textBox20.Text;
+                string timeBeg = maskedTextBox1.Text;
+                DateTime dateOrder = dateTimePicker1.Value;//.ToShortDateString();
+
+                if (lat.Length == 0 || lon.Length == 0)
+                {
+                    MessageBox.Show("Не заданы координаты заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                try
+                {
+                    Convert.ToDouble(lat.Replace('.', ','));
+                    Convert.ToDouble(lon.Replace('.', ','));
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка в координатах заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                if (dateTimePicker1.Value.Date < DateTime.Now.Date)
+                {
+                    MessageBox.Show("Проверьте дату выполнения заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                if (name.Length == 0)
+                {
+                    MessageBox.Show("Не указано название заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                if (!CheckTimeBeg())
+                {
+                    MessageBox.Show("Ошибка формата времени начала работы!", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                DBHandlerMySQL.AddOrder(name, "", lat, lon, "", "", "", "", "", "", false, "", dateOrder,
+                    timeBeg, "", "", "Нет");
+                DBHandlerMySQL.GetOrders();
+                FillCombo1();
+
+                textBox11.Clear();
+                maskedTextBox1.Clear();
+                textBox17.Clear();
+                textBox19.Clear();
+                textBox20.Clear();
+                //MessageBox.Show("Заказ " + name + " успешно создан!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        /// <summary>
+        /// Карта Google
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void googleMapsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Logger.Log.Info("Выбрано Google карту");
+            gMapControl1.MapProvider = GMap.NET.MapProviders.GoogleMapProvider.Instance;
+            gMapControl1.Refresh();
+        }
+
+        /// <summary>
+        /// Спутниковая карта
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void спутниковаяToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Logger.Log.Info("Выбрано спутниковую Google карту");
+            gMapControl1.MapProvider = GoogleSatelliteMapProvider.Instance;
+            gMapControl1.Refresh();
+        }
+
+        /// <summary>
+        /// OSM карта
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void openStreetMapToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Logger.Log.Info("Выбрано OSM карту");
+            gMapControl1.MapProvider = GMap.NET.MapProviders.OpenStreetMapProvider.Instance;
+            gMapControl1.Refresh();
+        }
+
+        /// <summary>
+        /// Яндекс карта
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void другаяToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            gMapControl1.MapProvider = GMap.NET.MapProviders.YandexMapProvider.Instance;
+            gMapControl1.Refresh();
+        }
+
+        /// <summary>
+        /// Бегунок для изменения масштаба карты
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void trackBar1_Scroll(object sender, EventArgs e)
+        {
+            gMapControl1.Zoom = trackBar1.Value;
+        }
+
+        /// <summary>
+        /// Обновление заказов, назначенных мастерам
+        /// </summary>
+        private void GetMyOrders()
+        {
+            for (int j = 0; j < Constants.MASTERS.Count; j++)
+            {
+                Constants.MASTERS[j].myOrders.Clear();
+            }
+
+            for (int i = 0; i < Constants.ORDERS.Count; i++)
+            {
+                for (int j = 0; j < Constants.MASTERS.Count; j++)
+                {
+                    if (Constants.ORDERS[i].Master.Equals(Constants.MASTERS[j].Name))
+                    {
+                        Constants.MASTERS[j].myOrders.Add(Constants.ORDERS[i]);
                     }
                 }
             }
-            return result;
         }
+
+        /// <summary>
+        /// Заполнение выпадающего списка нераспределенных заказов
+        /// </summary>
+        private void FillCombo1()
+        {
+            comboBox1.Items.Clear();
+            foreach (Order ord in Constants.ORDERS)
+            {
+                if (ord.Master.Equals("Нет") && ord.DateOrder.ToShortDateString().Equals(dateTimePicker1.Value.ToShortDateString()))
+                    comboBox1.Items.Add(ord.Name);
+            }
+            if (comboBox1.Items.Count > 0)
+                comboBox1.SelectedIndex = 0;
+            else
+            {
+                comboBox1.Text = "";
+                ShowMarkers();
+                ShowRoutes();
+            }
+        }
+
+        /// <summary>
+        /// Открытие кнопок мастеров в зависимости от того сколько их в БД
+        /// </summary>
+        private void FillMasters()
+        {
+            for (int i = 0; i < masterButtons.Length; i++)
+            {
+                masterButtons[i].Visible = false;
+            }
+            panel1.Height = 300;
+            groupBox1.Height = 20;
+            for (int i = 0; i < Constants.MASTERS.Count; i++)
+            {
+                masterButtons[i].Visible = true;
+                masterButtons[i].Text = Constants.MASTERS[i].Name;
+                routeList[i].Visible = true;
+                //masterCheckBoxes[i].Visible = true;
+                panel1.Height += 30;
+                groupBox1.Height += 30;
+            }
+        }
+
+        private void toolStripButton2_Click(object sender, EventArgs e)
+        {
+            new ManageOrders().ShowDialog();
+            GetMyOrders();
+            toolStripButton5_Click(sender, e);
+            ShowMarkers();
+            ShowRoutes();
+            FillCombo1();
+        }
+
         private void ShowMarkers()
         {
             for (int r = markersOverlay.Markers.Count - 1; r >= 0; r--)
@@ -241,14 +422,14 @@ namespace GmapTest
             {
                 if (ord.Name.Equals(comboBox1.Text))
                 {
-                    order = ord;                    
+                    order = ord;
                 }
                 else
                 {
                     if (ord.DateOrder.ToShortDateString().Equals(dateTimePicker1.Value.ToShortDateString()))
                     {
                         GMarkerGoogleType mark = orderMarker[0];
-                        if(ord.Master.Equals("Нет"))
+                        if (ord.Master.Equals("Нет"))
                             mark = orderMarker[2];
                         GMarkerGoogle marker = new GMarkerGoogle(new PointLatLng(Convert.ToDouble(ord.Lat), Convert.ToDouble(ord.Lon)), mark);
                         marker.ToolTip = new GMapRoundedToolTip(marker);
@@ -272,14 +453,14 @@ namespace GmapTest
                 marker.ToolTip.Stroke = Pens.Black;
                 marker.ToolTip.TextPadding = new Size(10, 10);
                 marker.ToolTip.Font = new Font("Arial", 11);
-                marker.ToolTipText = " \n" + order.Name+"\n"+ order.TimeBeg;
+                marker.ToolTipText = " \n" + order.Name + "\n" + order.TimeBeg;
                 marker.ToolTipMode = MarkerTooltipMode.Always;
                 markersOverlay.Markers.Add(marker);
             }
-            
+
             int k = 0;
             foreach (Master master in Constants.MASTERS)
-            {                
+            {
                 //double[] currCoord = GetCurrentCoord(master, dateTimePicker1.Value);
                 GMarkerGoogle markerMaster = new GMarkerGoogle(new PointLatLng(master.StartLat, master.StartLon), col[k]);
                 markerMaster.ToolTip = new GMap.NET.WindowsForms.ToolTips.GMapRoundedToolTip(markerMaster);
@@ -290,7 +471,7 @@ namespace GmapTest
                 markerMaster.ToolTip.Font = new Font("Arial", 11);
                 //markerMaster.ToolTip.Offset = GMapRoundedToolTip.DefaultForeground;
                 markerMaster.ToolTipMode = MarkerTooltipMode.Always;
-                markerMaster.ToolTipText = " \n"+master.Name;
+                markerMaster.ToolTipText = " \n" + master.Name;
                 markersOverlay.Markers.Add(markerMaster);
                 k++;
             }
@@ -299,7 +480,7 @@ namespace GmapTest
             else
             {
                 if (Constants.MASTERS.Count > 0)
-                    gMapControl1.Position = new PointLatLng(Convert.ToDouble(Constants.MASTERS[0].CurrentLat), Convert.ToDouble(Constants.MASTERS[0].CurrentLon));
+                    gMapControl1.Position = new PointLatLng(Convert.ToDouble(Constants.MASTERS[0].StartLat), Convert.ToDouble(Constants.MASTERS[0].StartLon));
                 else
                     gMapControl1.Position = new PointLatLng(55.75115385725043, 37.61728461663421);
             }
@@ -308,8 +489,9 @@ namespace GmapTest
         }
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
+            toolStripButton5_Click(sender, e);
             ShowMarkers();
-            //toolStripButton5_Click(sender, e);
+            ShowRoutes();
         }
 
         private void gMapControl1_OnMapZoomChanged()
@@ -317,154 +499,30 @@ namespace GmapTest
             trackBar1.Value = (int)gMapControl1.Zoom;
         }
 
-        //private double GetDistRouteOSM(Order order, Master master)//расчет расстояния из OSM файла
-        //{
-        //    List<PointLatLng> list = new List<PointLatLng>();
-        //    double dist = 0;
-        //    try
-        //    {
-        //        double[] currCoord = GetCurrentCoord(master, dateTimePicker1.Value);
-        //        var profile = Vehicle.Car.Fastest();
-
-        //        var route = router.Calculate(profile, (float)Convert.ToDouble(order.Lat), (float)Convert.ToDouble(order.Lon),
-        //            (float)currCoord[0], (float)currCoord[1]);
-        //        var routeGeoJson = route.ToGeoJson();
-
-        //        JObject CoordinateSearch = JObject.Parse(routeGeoJson.ToString());
-        //        IList<JToken> results = CoordinateSearch["features"].Children().ToList();
-        //        IList<SearchResult> searchResults = new List<SearchResult>();
-
-        //        SearchResult searchResult;
-        //        foreach (JToken result in results)
-        //        {
-        //            if (!result.ToString().Contains("\"type\": \"Point\""))
-        //            {
-        //                searchResult = JsonConvert.DeserializeObject<SearchResult>(result.ToString());
-        //                searchResults.Add(searchResult);
-        //                for (int d = 0; d < searchResult.geometry.coordinates.Length / 2; d++)
-        //                    list.Add(new GMap.NET.PointLatLng(searchResult.geometry.coordinates[d, 1], searchResult.geometry.coordinates[d, 0]));
-        //                dist = Math.Round(Convert.ToDouble(searchResult.properties.distance), 3);
-        //            }
-        //        }
-        //        dist = Math.Round(dist / 1000, 3);
-        //        master.SetGMapRoute(list, dist, order.Id);
-        //    }
-        //    catch
-        //    {
-        //        return 0;
-        //    }
-
-        //    return dist;
-        //}
-
-        private void button6_Click(object sender, EventArgs e)
+        private bool CheckTimeBeg()
         {
-            //if(!loadMap)
-            //{
-            //    MessageBox.Show("Не загружены данные картографии", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            //    return;
-            //}
-
-            //for (int j = 0; j < Constants.MASTERS.Count; j++)
-            //{
-            //    Order order = null;
-            //    for (int i = 0; i < Constants.ORDERS.Count; i++)
-            //    {
-            //        if (Constants.ORDERS[i].Name.Equals(comboBox1.Text))
-            //            order = Constants.ORDERS[i];
-            //    }
-            //    double res = 0;
-            //    if (true)//radioButton3.Checked)
-            //    {
-            //        res = GetDistRouteOSM(order, Constants.MASTERS[j]);
-            //    }
-            //    else
-            //    {
-            //        double[] currCoord = GetCurrentCoord(Constants.MASTERS[j], dateTimePicker1.Value);
-            //        res = Math.Round(Constants.getDistance(Convert.ToDouble(order.Lat), Convert.ToDouble(order.Lon),
-            //            currCoord[0], currCoord[1]) / 1000, 3);
-            //        List<PointLatLng> list = new List<PointLatLng>();
-            //        list.Add(new PointLatLng(Convert.ToDouble(order.Lat), Convert.ToDouble(order.Lon)));
-            //        list.Add(new PointLatLng(currCoord[0], currCoord[1]));
-            //        Constants.MASTERS[j].SetGMapRoute(list, res, order.Id);
-            //    }
-                //if (j == 0)
-                //{ button7.Text = Constants.MASTERS[j].Name + ";" + res; }
-                //if (j == 1)
-                //{ button8.Text = Constants.MASTERS[j].Name + ";" + res; }
-                //if (j == 2)
-                //{ button9.Text = Constants.MASTERS[j].Name + ";" + res; }
-                //if (j == 3)
-                //{ button10.Text = Constants.MASTERS[j].Name + ";" + res; }
-                //if (j == 4)
-                //{ button11.Text = Constants.MASTERS[j].Name + ";" + res; }
-                //if (j == 5)
-                //{ button12.Text = Constants.MASTERS[j].Name + ";" + res; }
-                //if (j == 6)
-                //{ button13.Text = Constants.MASTERS[j].Name + ";" + res; }
-                //if (j == 7)
-                //{ button14.Text = Constants.MASTERS[j].Name + ";" + res; }
-                //if (j == 8)
-                //{ button15.Text = Constants.MASTERS[j].Name + ";" + res; }
-                //if (j == 9)
-                //{ button16.Text = Constants.MASTERS[j].Name + ";" + res; }
-           // }
-
             try
             {
-                string name = textBox11.Text;
-                string lat = textBox19.Text;
-                string lon = textBox20.Text;
-                string timeBeg = textBox18.Text;
-                string dateOrder = dateTimePicker1.Value.ToShortDateString();
-
-                if (lat.Length == 0 || lon.Length == 0)
-                {
-                    MessageBox.Show("Не заданы координаты заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                if (dateTimePicker1.Value.Date < DateTime.Now.Date)
-                {
-                    MessageBox.Show("Проверьте дату выполнения заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                if (name.Length == 0)
-                {
-                    MessageBox.Show("Не указано название заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                //if ((dateTimePicker3.Value.Hour * 60 + dateTimePicker3.Value.Minute) > (dateTimePicker4.Value.Hour * 60 + dateTimePicker4.Value.Minute))
-                //{
-                //    MessageBox.Show("Неправильно задано время выполнения заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                //    return;
-                //}
-                DBHandler.AddOrder(name, "", lat, lon, "", "", "", "", "", "", false, "", dateOrder,
-                    timeBeg, "", "", "", "Нет");
-                RefreshTable();
-                FillCombo1();
-                textBox11.Clear();
-                textBox18.Clear();
-                textBox19.Clear();
-                textBox20.Clear();
-                //MessageBox.Show("Заказ " + name + " успешно создан!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                string[] str = maskedTextBox1.Text.Split(new Char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                if (Convert.ToInt32(str[0]) > 23 || Convert.ToInt32(str[1]) > 59)
+                    return false;
+                return true;
             }
-            catch (Exception ex)
+            catch
             {
-
+                return false;
             }
         }
 
-        
         private void gMapControl1_MouseClick(object sender, MouseEventArgs e)
         {
 
-            if(panel3.Visible)
+            if (e.Button == MouseButtons.Right)
             {
-                textBox13.Text = gMapControl1.FromLocalToLatLng(e.X, e.Y).Lat.ToString();
-                textBox14.Text = gMapControl1.FromLocalToLatLng(e.X, e.Y).Lng.ToString();
-                 
+                //toolStripButton5_Click(sender, e);
+                textBox19.Text = gMapControl1.FromLocalToLatLng(e.X, e.Y).Lat.ToString();
+                textBox20.Text = gMapControl1.FromLocalToLatLng(e.X, e.Y).Lng.ToString();
             }
-            
         }
 
         private void toolStripButton3_Click(object sender, EventArgs e)
@@ -472,231 +530,17 @@ namespace GmapTest
             new ManageMasters().ShowDialog();
             FillCombo1();
             FillMasters();
-            ShowMarkers();
-           // this.Refresh();
-        }
-
-        private void button18_Click(object sender, EventArgs e)
-        {
-            panel3.Visible = false; 
-        }
-
-        private void button17_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                string name = textBox15.Text;
-                string description = textBox10.Text;
-                string lat = textBox13.Text;
-                string lon = textBox14.Text;
-                string city = textBox1.Text;
-                string street = textBox2.Text;
-                string house = textBox3.Text;
-                string flat = textBox5.Text;
-                string office = textBox4.Text;
-                string porch = textBox6.Text;
-                bool intercom = checkBox11.Checked;
-                string dateOrder = dateTimePicker2.Value.ToShortDateString();
-                string floor = textBox7.Text;
-                string timeBeg = dateTimePicker3.Value.ToShortTimeString();
-                string timeEnd = dateTimePicker4.Value.ToShortTimeString();
-                string phone1 = textBox8.Text;
-                string phone2 = textBox9.Text;
-                string master = comboBox2.Text;
-                if(lat.Length==0 || lon.Length==0)
-                {
-                    MessageBox.Show("Не заданы координаты заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                if(dateTimePicker2.Value.Date<DateTime.Now.Date)
-                {
-                    MessageBox.Show("Проверьте дату выполнения заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                if(name.Length==0)
-                {
-                    MessageBox.Show("Не указано название заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                if((dateTimePicker3.Value.Hour*60+ dateTimePicker3.Value.Minute)> (dateTimePicker4.Value.Hour * 60 + dateTimePicker4.Value.Minute))
-                {
-                    MessageBox.Show("Неправильно задано время выполнения заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                DBHandler.AddOrder(name, description, lat, lon, city, street, house, flat, office, porch, intercom, floor, dateOrder,
-                    timeBeg, timeEnd, phone1, phone2, master);
-                RefreshTable();
-                FillCombo1();
-                MessageBox.Show("Заказ " + name + " успешно создан!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch(Exception ex)
-            {
-
-            }
-        }
-
-        private void RefreshTable()
-        {
-            DBHandler.GetOrders();
-            dataGridView1.Rows.Clear();
-            for (int i = 0; i < Constants.ORDERS.Count; i++)
-            {
-                dataGridView1.Rows.Add(Constants.ORDERS[i].Id, 
-                    Constants.ORDERS[i].DateCreate.ToShortDateString(),
-                    Constants.ORDERS[i].Name, 
-                    Constants.ORDERS[i].Phone1,
-                    Constants.ORDERS[i].DateOrder.ToShortDateString(),
-                    Constants.ORDERS[i].Description,
-                    Constants.ORDERS[i].City,
-                    Constants.ORDERS[i].Street,
-                    Constants.ORDERS[i].House,
-                    Constants.ORDERS[i].Flat,
-                    Constants.ORDERS[i].Office,
-                    Constants.ORDERS[i].Porch,
-                    Constants.ORDERS[i].Floor,
-                    Constants.ORDERS[i].Intercom,
-                    Constants.ORDERS[i].Phone2,
-                    Constants.ORDERS[i].TimeBeg,
-                    Constants.ORDERS[i].TimeEnd,
-                    Constants.ORDERS[i].Lat,
-                    Constants.ORDERS[i].Lon,
-                    Constants.ORDERS[i].Master
-                    );
-            }
-        }
-
-        private void button19_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                string id = textBox12.Text;
-                string name = textBox15.Text;
-                string description = textBox10.Text;
-                string lat = textBox13.Text;
-                string lon = textBox14.Text;
-                string city = textBox1.Text;
-                string street = textBox2.Text;
-                string house = textBox3.Text;
-                string flat = textBox5.Text;
-                string office = textBox4.Text;
-                string porch = textBox6.Text;
-                bool intercom = checkBox11.Checked;
-                string dateOrder = dateTimePicker2.Value.ToShortDateString();
-                string floor = textBox7.Text;
-                string timeBeg = dateTimePicker3.Value.ToShortTimeString();
-                string timeEnd = dateTimePicker4.Value.ToShortTimeString();
-                string phone1 = textBox8.Text;
-                string phone2 = textBox9.Text;
-                string master = comboBox2.Text;
-                bool completed = checkBox12.Checked;
-                if (lat.Length == 0 || lon.Length == 0)
-                {
-                    MessageBox.Show("Не заданы координаты заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                if (dateTimePicker2.Value.Date < DateTime.Now.Date)
-                {
-                    MessageBox.Show("Проверьте дату выполнения заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                if (name.Length == 0)
-                {
-                    MessageBox.Show("Не указано название заказа!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-                DBHandler.UpdateOrder(id, name, description, lat, lon, city, street, house, flat, office, porch, intercom, floor, dateOrder,
-                    timeBeg, timeEnd, phone1, phone2, master, completed);
-                RefreshTable();
-                GetMyOrders();
-                ShowMarkers();
-                FillCombo1();
-                if (completed)
-                    MessageBox.Show("Заказ " + name + " выполнен!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                else
-                    MessageBox.Show("Информация о заказе " + name + " успешно обновлена!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-
-            }
-        }
-
-        private void radioButton4_CheckedChanged(object sender, EventArgs e)
-        {
-            //button1.Enabled = radioButton4.Checked ? false : true;
-        }
-
-        private void panel3_VisibleChanged(object sender, EventArgs e)
-        {
-            if(panel3.Visible)
-            {
-                RefreshTable();
-            }
-        }
-               
-        private void button20_Click(object sender, EventArgs e)
-        {
-            if (textBox12.Text != "")
-            {
-                if (MessageBox.Show("Вы действительно хотите удалить заказ " + textBox15.Text + "?", "", MessageBoxButtons.YesNoCancel) == DialogResult.Yes)
-                {
-                    DBHandler.DeleteOrder(textBox12.Text);
-                    RefreshTable();
-                    GetMyOrders();
-                    ShowMarkers();
-                    FillCombo1();
-                    MessageBox.Show("Заказ " + textBox15.Text + " успешно удален!", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    
-                    textBox1.Clear();
-                    textBox2.Clear();
-                    textBox3.Clear();
-                    textBox4.Clear();
-                    textBox5.Clear();
-                    textBox6.Clear();
-                    textBox7.Clear();
-                    textBox10.Clear();
-                    textBox12.Clear();
-                    textBox13.Clear();
-                    textBox14.Clear();
-                    textBox15.Clear();
-                }
-            }
-        }
-
-        private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            textBox12.Text = dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[0].Value.ToString();
-            textBox13.Text = dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[17].Value.ToString();
-            textBox14.Text = dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[18].Value.ToString();
-            textBox1.Text = dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[6].Value.ToString();
-            textBox2.Text = dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[7].Value.ToString();
-            textBox3.Text = dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[8].Value.ToString();
-            textBox4.Text = dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[10].Value.ToString();
-            textBox5.Text = dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[9].Value.ToString();
-            textBox6.Text = dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[11].Value.ToString();
-            textBox7.Text = dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[12].Value.ToString();
-            textBox15.Text = dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[2].Value.ToString();
-            textBox10.Text = dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[5].Value.ToString();
-            comboBox2.Text = dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[19].Value.ToString();
-            dateTimePicker3.Value = Convert.ToDateTime(dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[15].Value);
-            dateTimePicker4.Value = Convert.ToDateTime(dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[16].Value);
-        }
-
-        private void dateTimePicker1_ValueChanged(object sender, EventArgs e)
-        {
-            FillCombo1();
             toolStripButton5_Click(sender, e);
+            ShowMarkers();
             ShowRoutes();
-        }
-
-        private void button24_Click(object sender, EventArgs e)
-        {
-            panel4.Visible = false;
+            // this.Refresh();
         }
 
         private void button7_Click(object sender, EventArgs e)
         {
             AppointOrder(Constants.MASTERS[0]);
+            toolStripButton5_Click(sender, e);
+            ShowMarkers();
             ShowRoutes();
         }
 
@@ -711,7 +555,7 @@ namespace GmapTest
             if (order != null)
             {
                 order.Master = master.Name;
-                DBHandler.SetMasterOrder(order);
+                DBHandlerMySQL.SetMasterOrder(order);
                 master.myOrders.Add(order);
                 FillCombo1();
             }
@@ -730,171 +574,141 @@ namespace GmapTest
             Cursor.Current = Cursors.Default;
         }
 
-        private void OpenMyOrdersPanel(Button btn)
-        {
-            panel4.Visible = true;
-            panel4.Location = new Point(257, 29);
-            panel3.Visible = false;
-            foreach (Master master in Constants.MASTERS)
-            {
-                string[] str = btn.Text.Split(new Char[] { ';' });
-                if(str[0].Equals(master.Name))
-                {
-                    label1.Text = master.Name;
-                    dateTimePicker5.Value = dateTimePicker1.Value;
-                    FillDataGridMyOrder(master);
-                    break;
-                }
-            }
-            textBox16.Text = comboBox1.Text;
-        }
-
-        private void FillDataGridMyOrder(Master master)
-        {
-            dataGridView2.Rows.Clear();
-            int count = 0;
-            foreach(Order order in master.myOrders)
-            {
-                if (order.DateOrder.ToShortDateString().Equals(dateTimePicker5.Value.ToShortDateString()))
-                {
-                    dataGridView2.Rows.Add(++count, order.Id, order.Name,
-                        order.City + "," + order.Street + "," + order.House, order.TimeBeg, order.TimeEnd);
-                }
-            }
-        }
-
         private void button8_Click(object sender, EventArgs e)
         {
             AppointOrder(Constants.MASTERS[1]);
+            toolStripButton5_Click(sender, e);
+            ShowMarkers();
             ShowRoutes();
         }
 
         private void button9_Click(object sender, EventArgs e)
         {
             AppointOrder(Constants.MASTERS[2]);
+            toolStripButton5_Click(sender, e);
+            ShowMarkers();
             ShowRoutes();
         }
 
         private void button10_Click(object sender, EventArgs e)
         {
             AppointOrder(Constants.MASTERS[3]);
+            toolStripButton5_Click(sender, e);
+            ShowMarkers();
             ShowRoutes();
         }
 
         private void button11_Click(object sender, EventArgs e)
         {
             AppointOrder(Constants.MASTERS[4]);
+            toolStripButton5_Click(sender, e);
+            ShowMarkers();
             ShowRoutes();
         }
 
         private void button12_Click(object sender, EventArgs e)
         {
             AppointOrder(Constants.MASTERS[5]);
+            toolStripButton5_Click(sender, e);
+            ShowMarkers();
             ShowRoutes();
         }
 
         private void button13_Click(object sender, EventArgs e)
         {
             AppointOrder(Constants.MASTERS[6]);
+            toolStripButton5_Click(sender, e);
+            ShowMarkers();
             ShowRoutes();
         }
 
         private void button14_Click(object sender, EventArgs e)
         {
             AppointOrder(Constants.MASTERS[7]);
+            toolStripButton5_Click(sender, e);
+            ShowMarkers();
             ShowRoutes();
         }
 
         private void button15_Click(object sender, EventArgs e)
         {
             AppointOrder(Constants.MASTERS[8]);
+            toolStripButton5_Click(sender, e);
+            ShowMarkers();
             ShowRoutes();
         }
 
         private void button16_Click(object sender, EventArgs e)
         {
             AppointOrder(Constants.MASTERS[9]);
+            toolStripButton5_Click(sender, e);
+            ShowMarkers();
             ShowRoutes();
-        }
-
-        private void dateTimePicker5_ValueChanged(object sender, EventArgs e)
-        {
-            foreach (Master master in Constants.MASTERS)
-            {
-                if (label1.Text.Equals(master.Name))
-                {
-                    FillDataGridMyOrder(master);
-                    break;
-                }
-            }
-        }
-
-        private void button22_Click(object sender, EventArgs e)
-        {
-            Master master=null;
-            foreach(Master mast in Constants.MASTERS)
-            {
-                if (mast.Name.Equals(label1.Text))
-                    master = mast;
-            }
-            foreach(Order order in Constants.ORDERS)
-            {
-                if(order.Name.Equals(textBox16.Text) && master!=null)
-                {
-                    foreach(Order ord in master.myOrders)
-                    {
-                        if(ord.Id==order.Id)
-                        {
-                            MessageBox.Show("Этот заказ уже назначен данному мастеру!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
-                        }
-                    }
-                    order.DateOrder = dateTimePicker5.Value;
-                    order.TimeBeg = dateTimePicker6.Value.ToShortTimeString();
-                    order.TimeEnd = dateTimePicker7.Value.ToShortTimeString();
-                    order.Master = master.Name;
-                    DBHandler.SetMasterOrder(order);
-                    master.myOrders.Add(order);
-                    FillCombo1();
-                    FillDataGridMyOrder(master);
-                }
-            }
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void toolStripButton6_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void button25_Click(object sender, EventArgs e)
-        {
-
         }
 
         private void toolStripButton5_Click(object sender, EventArgs e)
         {
-            //for (int i = gMapControl1.Overlays.Count - 1; i >= 0; i--)
-            //    gMapControl1.Overlays[i].Clear();
+            for (int i = gMapControl1.Overlays.Count - 1; i >= 0; i--)
+                gMapControl1.Overlays[i].Clear();
             markersOverlay.Routes.Clear();
             //foreach(CheckBox ch in masterCheckBoxes)
             //{
             //    ch.Checked = false;
             //}
 
-            for(int i=0;i<Constants.MASTERS.Count;i++)
+            for (int i = 0; i < Constants.MASTERS.Count; i++)
             {
                 masterButtons[i].Text = Constants.MASTERS[i].Name;
                 Constants.MASTERS[i].currentRoute = null;
             }
-            ShowMarkers();
+            //ShowMarkers();
             gMapControl1.Refresh();
+        }
 
-            
-        }        
+        public static String FONT = "7454.ttf";
+        private void RouteListPdf(Master master)
+        {
+            string strPdf = DateTime.Now.ToString("dd.MM.yyyy HH:mm") + "\n" + master.Name + "\nМаршрутный лист на " + dateTimePicker1.Value.ToShortDateString() + "\n";
+            strPdf += "---------------------------------------------\n";
+            for (int i = 0; i < master.myOrders.Count; i++)
+            {
+                string intercom = master.myOrders[i].Intercom?"есть":"нет";
+
+                strPdf += (i + 1).ToString() + "  " + master.myOrders[i].Name + "  " + master.myOrders[i].TimeBeg + "  " +
+                    master.myOrders[i].City + ", " + master.myOrders[i].Street + " д." + master.myOrders[i].House + ", кв." + 
+                    master.myOrders[i].Flat + " (оф." + master.myOrders[i].Office + "), под."+ master.myOrders[i].Porch + ", эт." +
+                    master.myOrders[i].Floor+", домофон "+ intercom + ", тел.1:" + master.myOrders[i].Phone1 + ", тел.2:" + 
+                    master.myOrders[i].Phone2 + "   " + master.myOrders[i].Description + "\n";
+
+            }
+            saveFileDialog1.Filter = "Формат .PDF (*.pdf)|*.pdf|Все файлы (*.*)|*.*";
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                //using (PdfWriter pdfWriter = new PdfWriter(Constants.MASTERS[0].Name+"_"+dateTimePicker1.Value.ToShortDateString()+".pdf"))
+                using (PdfWriter pdfWriter = new PdfWriter(saveFileDialog1.FileName))
+                using (PdfDocument pdfDocument = new PdfDocument(pdfWriter))
+                using (Document document = new Document(pdfDocument))
+                {
+                    PdfFont f2 = PdfFontFactory.CreateFont(FONT, "Identity-H", true);
+                    document.Add(new Paragraph(strPdf).SetFont(f2));
+                    
+                }
+            }           
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            RouteListPdf(Constants.MASTERS[0]);
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            RouteListPdf(Constants.MASTERS[1]);
+        }
+
+        private void button22_Click(object sender, EventArgs e)
+        {
+            RouteListPdf(Constants.MASTERS[2]);
+        }
     }
 }

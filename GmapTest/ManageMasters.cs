@@ -16,15 +16,9 @@ namespace GmapTest
         {
             InitializeComponent();
         }
-
-        private void label2_Click(object sender, EventArgs e)
-        {
-
-        }
-
+       
         private void ManageMasters_Load(object sender, EventArgs e)
-        {
-            
+        {            
             for(int i=0;i<Constants.MASTERS.Count;i++)
             {
                 dataGridView1.Rows.Add(i+1, Constants.MASTERS[i].Name, Constants.MASTERS[i].StartLat,
@@ -34,13 +28,13 @@ namespace GmapTest
 
         private void button1_Click(object sender, EventArgs e)
         {
-            DBHandler.AddMaster(textBox1.Text, textBox2.Text, textBox3.Text, checkBox1.Checked);
+            DBHandlerMySQL.AddMaster(textBox1.Text, textBox2.Text, textBox3.Text, checkBox1.Checked);
             RefreshTable();
         }
 
         private void RefreshTable()
         {
-            DBHandler.GetMasters();
+            DBHandlerMySQL.GetMasters();
             dataGridView1.Rows.Clear();
             for (int i = 0; i < Constants.MASTERS.Count; i++)
             {
@@ -51,21 +45,19 @@ namespace GmapTest
 
         private void button2_Click(object sender, EventArgs e)
         {
-            DBHandler.UpdateMaster(textBox1.Text, textBox2.Text, textBox3.Text, checkBox1.Checked);
+            DBHandlerMySQL.UpdateMaster(textBox1.Text, textBox2.Text, textBox3.Text, checkBox1.Checked);
             RefreshTable();
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
-            DBHandler.DeleteMaster(textBox1.Text);
-            RefreshTable();
+            if (DialogResult.Yes == MessageBox.Show("Вы действительно хотите удалить мастера " + textBox1.Text + "?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question))
+            {
+                DBHandlerMySQL.DeleteMaster(textBox1.Text);
+                RefreshTable();
+            }
         }
-
-        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            
-        }
-
+        
         private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             textBox1.Text = dataGridView1.Rows[dataGridView1.CurrentRow.Index].Cells[1].Value.ToString();
